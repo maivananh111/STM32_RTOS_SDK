@@ -1,0 +1,9 @@
+Debug/
+Startup/
+STM32F407VGTX_FLASH.ld
+STM32F407VGTX_RAM.ld
+STM_SDK Debug.launch
+.cproject
+.project
+
+
