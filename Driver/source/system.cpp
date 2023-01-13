@@ -141,8 +141,28 @@ uint32_t get_used_heap_size(void){
 	return mi.uordblks;
 }
 
+extern "C"{
+void NMI_Handler(void){
+	__NVIC_SystemReset();
+}
 
+void HardFault_Handler(void){
+	__NVIC_SystemReset();
+}
 
+void MemManage_Handler(void){
+	__NVIC_SystemReset();
+}
+
+void BusFault_Handler(void){
+	__NVIC_SystemReset();
+}
+
+void UsageFault_Handler(void){
+	__NVIC_SystemReset();
+}
+
+}
 
 
 

@@ -46,6 +46,13 @@ Memory_Info_t get_memory_info(void);
 uint32_t get_free_heap_size(void);
 uint32_t get_used_heap_size(void);
 
+void NMI_Handler(void);
+void HardFault_Handler(void);
+void MemManage_Handler(void);
+void UsageFault_Handler(void);
+
+
+
 
 #ifdef __cplusplus
 }

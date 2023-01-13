@@ -26,22 +26,13 @@ RCC_Config_t rcc = {
 };
 
 
-
 #ifdef LOG_MONITOR
 static const char* TAG = (const char *)"CPU Start";
-#endif
-
-#ifdef LOG_MONITOR
 static void uart_log_init(void);
 static void uart_log(char *log);
 static USART_TypeDef *log_uart = (USART_TypeDef *)LOG_UART_NUM;
 #endif
 
-
-volatile uint32_t uTick = 0;
-
-void TIM_RTOS_init(void);
-extern "C" void TIM1_UP_TIM10_IRQHandler(void);
 
 
 int main(void){
@@ -51,15 +42,18 @@ int main(void){
 
 	gpio_allport_clock_enable();
 
+	gpio_set_mode(GPIOC, 6, GPIO_OUTPUT_PUSHPULL);
+	gpio_set(GPIOC, 6);
+
 #ifdef LOG_MONITOR
 	uart_log_init();
 	stm_log_init(uart_log);
 
-	STM_LOGI(TAG, "SDK version:    %s", SDK_VERSION);
-	STM_LOGW(TAG, "Revision ID:    0x%04x", get_revid());
-	STM_LOGE(TAG, "Device ID:      0x%04x", get_devid());
+	STM_LOGI(TAG, "SDK version   : %s", SDK_VERSION);
+	STM_LOGW(TAG, "Revision ID   : 0x%04x", get_revid());
+	STM_LOGE(TAG, "Device ID     : 0x%04x", get_devid());
 	STM_LOGD(TAG, "Core frequency: %luHz", rcc_get_bus_frequency(SYSCLK));
-	STM_LOGM(TAG, "AHB frequency:  %luHz", rcc_get_bus_frequency(AHB));
+	STM_LOGM(TAG, "AHB frequency : %luHz", rcc_get_bus_frequency(AHB));
 	STM_LOGP(TAG, "APB1 frequency: %luHz", rcc_get_bus_frequency(APB1));
 	STM_LOGR(TAG, "APB2 frequency: %luHz", rcc_get_bus_frequency(APB2));
 
@@ -68,34 +62,6 @@ int main(void){
 	return app_main();
 }
 
-void TIM_RTOS_init(void){
-	RCC -> APB2ENR |= RCC_APB2ENR_TIM1EN;
-
-	TIM1 -> SR = 0;
-	TIM1 -> PSC = 167U;
-	TIM1 -> ARR = 999U;
-	TIM1 -> EGR = TIM_EGR_UG;
-
-	TIM1 -> DIER |= TIM_DIER_UIE;
-	TIM1 -> CR1 |= TIM_CR1_CEN;
-	TIM1 -> SR = 0;
-
-	NVIC_Set_Priority(TIM1_UP_TIM10_IRQn, 0U, 0U);
-	__NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
-	__NVIC_ClearPendingIRQ(TIM1_UP_TIM10_IRQn);
-}
-
-//extern "C"{
-//	void TIM1_UP_TIM10_IRQHandler(void){
-//		TIM1 -> SR =~ TIM_SR_UIF;
-//		uTick++;
-//		if(uTick > 1000){
-//			gpio_set(GPIOC, 13);
-//			for(uint32_t i=0; i<42000; i++) __NOP();
-//			uTick = 0;
-//		}
-//	}
-//}
 
 
 #ifdef LOG_MONITOR

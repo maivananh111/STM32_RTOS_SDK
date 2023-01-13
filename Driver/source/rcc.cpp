@@ -63,7 +63,7 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 			return res;
 		}
 		RCC -> CR &= ~RCC_CR_HSITRIM_Msk;
-		RCC -> CR |= (_conf -> hsi_trim);
+		RCC -> CR |= (_conf -> hsi_trim << RCC_CR_HSITRIM_Pos);
 
 	}
 	else if(_conf -> osc_source == HSE_CRYSTAL){
@@ -170,6 +170,66 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 	tim_for_tick_init(SYSTICK_PRIORITY);
 #endif
 
+	return res;
+}
+
+Result_t rcc_deinit(void){
+	Result_t res = {OKE, 0U};
+
+	/**
+	 * Turn on HSI (default).
+	 */
+	RCC -> CR |= RCC_CR_HSION;
+	res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSIRDY, FLAG_SET, RCC_HSI_TIMEOUT);
+	if(result_is_timeout(&res)) {
+		set_result_line(&res, __LINE__);
+		return res;
+	}
+	RCC -> CR &= ~RCC_CR_HSITRIM_Msk;
+	RCC -> CR |= (0x10U << RCC_CR_HSITRIM_Pos);
+
+	/**
+	 * Clear CFGR register.
+	 */
+	RCC -> CFGR = 0x00U;
+	res = wait_flag_in_register_timeout(&(RCC -> CFGR), 0xFFFFFFFFU, FLAG_RESET, RCC_SWS_TIMEOUT);
+	if(result_is_timeout(&res)) {
+		set_result_line(&res, __LINE__);
+		return res;
+	}
+
+	/**
+	 * Turn off HSE.
+	 */
+	RCC -> CR &=~ RCC_CR_HSEON;
+	res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSERDY, FLAG_RESET, RCC_HSE_TIMEOUT);
+	if(result_is_timeout(&res)) {
+		set_result_line(&res, __LINE__);
+		return res;
+	}
+
+	/**
+	 * Turn off PLL.
+	 */
+	RCC -> CR &=~ RCC_CR_PLLON;
+	res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_PLLRDY, FLAG_RESET, RCC_PLL_TIMEOUT);
+	if(result_is_timeout(&res)) {
+		set_result_line(&res, __LINE__);
+		return res;
+	}
+
+	RCC -> PLLCFGR = RCC_PLLCFGR_PLLM_4 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLQ_2;
+
+	SystemCoreClock = HSI_VALUE;
+
+	/**
+	 * ReInit system tick.
+	 */
+#if (!RTOS)
+	systick_init(SYSTICK_PRIORITY);
+#else
+	tim_for_tick_init(SYSTICK_PRIORITY);
+#endif
 
 	return res;
 }

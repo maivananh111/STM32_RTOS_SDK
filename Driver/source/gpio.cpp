@@ -4,7 +4,9 @@
  *  Created on: Jan 5, 2023
  *      Author: anh
  */
+#include "periph_en.h"
 
+#ifdef ENABLE_GPIO
 
 #include "gpio.h"
 
@@ -44,6 +46,70 @@ void gpio_port_clock_enable(GPIO_TypeDef *port){
 }
 
 /**
+ * @fn void gpio_config(GPIO_Config_t*)
+ * @brief Configuration gpio pin.
+ *
+ * @pre
+ * @post
+ * @param conf gpio configuration struct.
+ */
+void gpio_init(GPIO_Config_t *conf){
+	conf -> port -> MODER &=~ (3U << (conf -> pin*2));
+	conf -> port -> MODER |= (conf -> direction << (conf -> pin*2));
+
+	conf -> port -> OTYPER &=~ (1U << conf -> pin);
+	conf -> port -> OTYPER |= (conf -> outputtype << conf -> pin);
+
+	conf -> port -> OSPEEDR &=~ (3U << (conf -> pin*2));
+	conf -> port -> OSPEEDR |= (conf -> outputspeed << (conf -> pin*2));
+
+	conf -> port -> PUPDR &=~ (3U << (conf -> pin*2));
+	conf -> port -> PUPDR |= (conf -> pullresister << (conf -> pin*2));
+
+	if(conf -> direction == GPIO_AlternateFunction){
+		if(conf -> pin < 8){
+			conf -> port -> AFR[0] &=~ (0x0FU << (conf -> pin*4));
+			conf -> port -> AFR[0] |=  (conf -> function  << (conf -> pin*4));
+		}
+		else{
+			conf -> port -> AFR[1] &=~ (0x0FU << ((conf -> pin-8)*4));
+			conf -> port -> AFR[1] |=  (conf -> function  << ((conf -> pin-8)*4));
+		}
+	}
+}
+
+/**
+ * @fn void gpio_deinit(GPIO_TypeDef*, uint16_t)
+ * @brief
+ *
+ * @pre
+ * @post
+ * @param port
+ * @param pin
+ */
+void gpio_deinit(GPIO_TypeDef *port, uint16_t pin){
+	port -> MODER &=~ (3U << (pin*2));
+	if((port == GPIOA && pin >= 13U) || (port == GPIOB && (pin == 3U || pin == 4U))) port -> MODER |= (2U << (pin*2));
+
+	port -> OTYPER &=~ (1U << pin);
+
+	port -> OSPEEDR &=~ (3U << (pin*2));
+	if((port == GPIOA && pin == 13U) || (port == GPIOB && pin == 3U)) port -> OSPEEDR |= (3U << (pin*2));
+
+	port -> PUPDR &=~ (3U << (pin*2));
+	if(port == GPIOA){
+		if(pin == 13 || pin == 15) port -> PUPDR |= (1U << (pin*2));
+		else if(pin == 14) port -> PUPDR |= (2U << (pin*2));
+	}
+	if(port == GPIOB && pin == 4) port -> PUPDR |= (1U << (pin*2));
+
+	if(pin < 8) port -> AFR[0] &=~ (0x0FU << (pin*4));
+	else port -> AFR[1] &=~ (0x0FU << ((pin-8)*4));
+
+	port -> BSRR |= 0xFFFF0000U;
+}
+
+/**
  * @fn void gpio_set_mode(GPIO_TypeDef*, uint16_t, GPIOMode_t)
  * @brief Set mode for the gpio pin.
  *
@@ -53,7 +119,7 @@ void gpio_port_clock_enable(GPIO_TypeDef *port){
  * @param pin  gpio pin selected.
  * @param mode gpio pin mode.
  */
-void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIOMode_t mode){
+void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode){
 	__IO uint32_t tmpreg = 0U;
 	/* *************************************************** */
 	if(mode <=  GPIO_INPUT_PULLDOWN){ // GPIO_INPUT.
@@ -107,7 +173,7 @@ void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIOMode_t mode){
  * @param pin  gpio pin selected.
  * @param function Alternate function for gpio pin.
  */
-void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIOAlternateFunction_t function){
+void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIO_AlternateFunction_t function){
 	port -> MODER &=~ (3U << (pin*2));
 	port -> MODER |=  (2U << (pin*2));
 
@@ -134,7 +200,7 @@ void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIOAlternateF
  * @param pin  gpio pin selected.
  * @param mode gpio mode(type).
  */
-void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, GPIOMode_t mode){
+void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode){
 	if(mode == GPIO_OUTPUT_OPENDRAIN) port -> OTYPER |= (1U<<pin);
 	else if(mode == GPIO_OUTPUT_PUSHPULL) port -> OTYPER &=~ (1U<<pin);
 }
@@ -235,7 +301,7 @@ int gpio_get_level(GPIO_TypeDef *port, uint16_t pin){
 }
 
 
-
+#endif
 
 
 

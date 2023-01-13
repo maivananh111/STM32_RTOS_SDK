@@ -61,6 +61,8 @@ typedef struct{
 }RCC_Config_t;
 
 Result_t rcc_init(RCC_Config_t *rcc_conf);
+Result_t rcc_deinit(void);
+
 uint32_t rcc_get_bus_frequency(Bus_Clock_t bus);
 
 

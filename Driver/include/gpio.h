@@ -12,12 +12,39 @@
 
 #include "stdio.h"
 #include "stm32f4xx.h"
+#include "periph_en.h"
+
+#ifdef ENABLE_GPIO
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define GPIO_OUTPUTSPEED_DEFAULT 3U
+#define GPIO_OUTPUTSPEED_DEFAULT GPIO_Speed_VeryHigh
+
+typedef enum{
+	GPIO_Input,
+	GPIO_Output,
+	GPIO_AlternateFunction,
+} GPIO_Direction_t;
+
+typedef enum{
+	GPIO_PushPull,
+	GPIO_OpenDrain,
+} GPIO_type_t;
+
+typedef enum{
+	GPIO_Speed_Low,
+	GPIO_Speed_Medium,
+	GPIO_Speed_High,
+	GPIO_Speed_VeryHigh,
+} GPIO_OutputSpeed_t;
+
+typedef enum{
+	GPIO_NoPull,
+	GPIO_PullUp,
+	GPIO_PullDown,
+} GPIO_Pull_t;
 
 typedef enum{
 	GPIO_INPUT,
@@ -32,7 +59,7 @@ typedef enum{
 	GPIO_OUTPUT_PUSHPULL_PULLDOWN,
 
 	GPIO_ANALOG,
-} GPIOMode_t;
+} GPIO_Mode_t;
 
 typedef enum{
 	AF0_SYSTEM,
@@ -51,14 +78,28 @@ typedef enum{
 	AF13_DCMI,
 	AF14,
 	AF15_EVENTOUT,
-} GPIOAlternateFunction_t;
+} GPIO_AlternateFunction_t;
+
+typedef struct {
+	GPIO_TypeDef *port;
+	uint16_t pin;
+	GPIO_Direction_t direction;
+	GPIO_type_t outputtype;
+	GPIO_OutputSpeed_t outputspeed;
+	GPIO_Pull_t pullresister;
+	GPIO_AlternateFunction_t function;
+} GPIO_Config_t;
 
 
 void gpio_allport_clock_enable(void);
 void gpio_port_clock_enable(GPIO_TypeDef *port);
-void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIOMode_t mode);
-void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIOAlternateFunction_t function);
-void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, GPIOMode_t mode);
+
+void gpio_init(GPIO_Config_t *conf);
+void gpio_deinit(GPIO_TypeDef *port, uint16_t pin);
+
+void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode);
+void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIO_AlternateFunction_t function);
+void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode);
 
 void gpio_set_pullup(GPIO_TypeDef *port, uint16_t pin);
 void gpio_set_pulldown(GPIO_TypeDef *port, uint16_t pin);
@@ -84,5 +125,6 @@ int gpio_get_level(GPIO_TypeDef *port, uint16_t pin);
 }
 #endif
 
+#endif
 
 #endif /* GPIO_H_ */

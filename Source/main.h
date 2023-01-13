@@ -22,8 +22,6 @@
 extern "C"{
 #endif
 
-extern volatile uint32_t uTick;
-
 int app_main(void);
 
 #ifdef __cplusplus

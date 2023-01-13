@@ -12,11 +12,27 @@
 #define SDK_VERSION                     "v1.0.1"
 
 /**
- * Device and operating system configuration.
+ * Device and operating system set.
  */
-#define STM32F407xx            			  	// Define STM32 device.
+/* Core */
+//#define Cortex_M0
+//#define Cortex_M3
+#define Cortex_M4
+/* Device */
+#define STM32F407xx            			// Define STM32 device.
 #define RTOS							1
 
+/**
+ * RTOS Configuration.
+ */
+#if RTOS
+#define TOTAL_HEAP_SIZE                 (128U * 1024U)
+#define RTOS_HEAP_SIZE                  (64U * 1024U)
+
+#define MAX_SYSTEM_INTERRUPT_PRIORITY   4 // Your system interrupt priority must be greater than this number.
+#define MAX_PRIORITY                    32
+#define byte_to_word(x)                 (x/4)
+#endif
 /**
  * Embedded flash memory configuration.
  */
@@ -83,7 +99,7 @@
 #define LOG_UART_RX 					7
 #define LOG_UART_RXP 					GPIOB
 
-#define LOG_TIME 						0
+#define LOG_TIME 						1
 #endif
 
 
