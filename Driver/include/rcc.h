@@ -19,18 +19,18 @@ extern "C"{
 typedef enum{
 	HSI_CRYSTAL,
 	HSE_CRYSTAL,
-} OSC_Source_t;
+} rcc_oscsource_t;
 
 typedef enum{
 	PLL_SOURCE_HSI,
 	PLL_SOURCE_HSE,
-} PLL_Source_t;
+} rcc_pllsource_t;
 
 typedef enum{
 	HSI,
 	HSE,
 	PLLCLK,
-} SysClock_Source_t;
+} rcc_sysclocksource_t;
 
 typedef enum{
 	SYSCLK,
@@ -39,19 +39,32 @@ typedef enum{
 	APB2,
 	APB1_TIMER,
 	APB2_TIMER,
-} Bus_Clock_t;
+} rcc_busclock_t;
+
+typedef enum{
+	Clock_Div_1 = 0U,
+	Clock_Div_2,
+	Clock_Div_4,
+	Clock_Div_8,
+	Clock_Div_16,
+	Clock_Div_32,
+	Clock_Div_64,
+	Clock_Div_128,
+	Clock_Div_256,
+	Clock_Div_512,
+} rcc_clockdiv_t;
 
 typedef struct{
-	uint32_t hse_frequency;
-	uint32_t hsi_frequency;
-	uint32_t hsi_trim;
-	OSC_Source_t osc_source;
-	SysClock_Source_t sysclock_source;
-	PLL_Source_t pll_source;
-	uint32_t sysclock_frequency;
-	uint32_t ahb_prescaler;
-	uint32_t apb1_prescaler;
-	uint32_t apb2_prescaler;
+	uint32_t hse_frequency 				= 25000000U;
+	uint32_t hsi_frequency 				= 16000000U;
+	uint32_t hsi_trim					= 16;
+	rcc_oscsource_t osc_source				= HSI_CRYSTAL;
+	rcc_sysclocksource_t sysclock_source	= HSI;
+	rcc_pllsource_t pll_source				= PLL_SOURCE_HSI;
+	uint32_t sysclock_frequency			= 16000000U;
+	rcc_clockdiv_t ahb_prescaler;
+	rcc_clockdiv_t apb1_prescaler;
+	rcc_clockdiv_t apb2_prescaler;
 	struct{
 		uint32_t pllm;
 		uint32_t plln;
@@ -60,10 +73,10 @@ typedef struct{
 	} pll;
 }RCC_Config_t;
 
-Result_t rcc_init(RCC_Config_t *rcc_conf);
-Result_t rcc_deinit(void);
+return_t rcc_init(RCC_Config_t *rcc_conf);
+return_t rcc_deinit(void);
 
-uint32_t rcc_get_bus_frequency(Bus_Clock_t bus);
+uint32_t rcc_get_bus_frequency(rcc_busclock_t bus);
 
 
 

@@ -17,15 +17,16 @@ extern "C" {
 #endif
 
 #include "stm32f4xx.h"
+#include "status.h"
 
 
 typedef enum{
 	EXTI_RISING_EDGE  = EXTI_RTSR_TR0,
 	EXTI_FALLING_EDGE = EXTI_FTSR_TR0,
 	EXTI_RISING_FALLING_EDGE  = EXTI_RTSR_TR0 | EXTI_FTSR_TR0,
-} EXTI_EdgeDetect_t;
+} exti_edgedetect_t;
 
-void exti_init(GPIO_TypeDef *Port, uint16_t Pin, EXTI_EdgeDetect_t Edge, uint32_t Priority);
+return_t exti_init(GPIO_TypeDef *Port, uint16_t Pin, exti_edgedetect_t Edge, uint32_t Priority);
 void exti_deinit(GPIO_TypeDef *Port, uint16_t Pin);
 
 void exti_register_event_handler(void (*function_ptr)(uint16_t pin, void *param), void *param);

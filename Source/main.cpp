@@ -7,7 +7,6 @@
 #include "main.h"
 
 
-
 RCC_Config_t rcc = {
 	.hse_frequency = HSE_VALUE,
 	.hsi_frequency = HSI_VALUE,
@@ -59,7 +58,8 @@ int main(void){
 
 #endif
 
-	return app_main();
+	app_main();
+	vTaskStartScheduler();
 }
 
 

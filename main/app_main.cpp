@@ -7,10 +7,6 @@
 
 #include "main.h"
 
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
-
 #include "exti.h"
 #include "stdlib.h"
 
@@ -27,7 +23,7 @@ void task_exti(void *param);
 
 void exti_eventhandler(uint16_t pin, void *param);
 
-int app_main(void){
+void app_main(void){
 	gpio_port_clock_enable(GPIOE);
 
 	exti_init(GPIOE, 3, EXTI_FALLING_EDGE, 4);
@@ -40,7 +36,7 @@ int app_main(void){
 
 
 	gpio_port_clock_enable(GPIOC);
-	GPIO_Config_t pc13 = {
+	gpio_config_t pc13 = {
 		.port = GPIOC,
 		.pin = 13,
 		.direction = GPIO_Output,
@@ -51,25 +47,17 @@ int app_main(void){
 	gpio_init(&pc13);
 
 	exti_queue = xQueueCreate(30, sizeof(char*));
-	if(exti_queue == 0) STM_LOGE(TAG, "Queue create failed.");
+	if(exti_queue == NULL) STM_LOGE(TAG, "Queue create failed.");
 	else STM_LOGI(TAG, "Queue create oke.");
 
 
+	xTaskCreate(task_logmem, "task_logmem", byte_to_word(1024), NULL, 3, NULL);
+	xTaskCreate(task_blink, "task_blink", byte_to_word(1024), NULL, 2, NULL);
+	xTaskCreate(task_exti, "task_exti", byte_to_word(1024), NULL, 4, NULL);
 
-	xTaskCreate(task_logmem, "task_logmem", 1024, NULL, 3, NULL);
-	xTaskCreate(task_blink, "task_blink", 1024, NULL, 2, NULL);
-	xTaskCreate(task_exti, "task_exti", 1024, NULL, 4, NULL);
-
-	vTaskStartScheduler();
-
-	return 0;
 }
 
-
-
-
 void task_blink(void *param){
-
 
 	while(1){
 		gpio_set(GPIOC, 13);

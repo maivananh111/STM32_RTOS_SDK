@@ -70,7 +70,7 @@ void STM_LOGP(const char *tag,  const char *format, ...);
 void STM_LOGM(const char *tag,  const char *format, ...);
 void STM_LOGR(const char *tag,  const char *format, ...);
 
-void STM_LOG_RES(Result_t res);
+void STM_LOG_RES(return_t res);
 void STM_LOG_MEM(void);
 
 #ifdef __cplusplus

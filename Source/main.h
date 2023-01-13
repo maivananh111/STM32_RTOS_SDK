@@ -11,6 +11,10 @@
 #include "sdkconfig.h"
 #include "stm32f4xx.h"
 
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+
 #include "system.h"
 #include "systick.h"
 #include "rcc.h"
@@ -22,7 +26,7 @@
 extern "C"{
 #endif
 
-int app_main(void);
+void app_main(void);
 
 #ifdef __cplusplus
 }

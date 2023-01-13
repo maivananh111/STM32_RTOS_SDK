@@ -8,13 +8,15 @@
 #ifndef GPIO_H_
 #define GPIO_H_
 
+
+#include "periph_en.h"
+
+#ifdef ENABLE_GPIO
+
 #include "sdkconfig.h"
 
 #include "stdio.h"
 #include "stm32f4xx.h"
-#include "periph_en.h"
-
-#ifdef ENABLE_GPIO
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,31 +25,31 @@ extern "C" {
 #define GPIO_OUTPUTSPEED_DEFAULT GPIO_Speed_VeryHigh
 
 typedef enum{
-	GPIO_Input,
+	GPIO_Input = 0,
 	GPIO_Output,
 	GPIO_AlternateFunction,
-} GPIO_Direction_t;
+} gpio_derection_t;
 
 typedef enum{
-	GPIO_PushPull,
+	GPIO_PushPull = 0,
 	GPIO_OpenDrain,
-} GPIO_type_t;
+} gpio_outputtype_t;
 
 typedef enum{
-	GPIO_Speed_Low,
+	GPIO_Speed_Low = 0,
 	GPIO_Speed_Medium,
 	GPIO_Speed_High,
 	GPIO_Speed_VeryHigh,
-} GPIO_OutputSpeed_t;
+} gpio_outputspeed_t;
 
 typedef enum{
-	GPIO_NoPull,
+	GPIO_NoPull = 0,
 	GPIO_PullUp,
 	GPIO_PullDown,
-} GPIO_Pull_t;
+} gpio_pullresistor_t;
 
 typedef enum{
-	GPIO_INPUT,
+	GPIO_INPUT = 0,
 	GPIO_INPUT_PULLUP,
 	GPIO_INPUT_PULLDOWN,
 
@@ -59,10 +61,10 @@ typedef enum{
 	GPIO_OUTPUT_PUSHPULL_PULLDOWN,
 
 	GPIO_ANALOG,
-} GPIO_Mode_t;
+} gpio_mode_t;
 
 typedef enum{
-	AF0_SYSTEM,
+	AF0_SYSTEM = 0,
 	AF1_TIM1_2,
 	AF2_TIM3_5,
 	AF3_TIM8_11,
@@ -78,28 +80,28 @@ typedef enum{
 	AF13_DCMI,
 	AF14,
 	AF15_EVENTOUT,
-} GPIO_AlternateFunction_t;
+} gpio_alternatefunction_t;
 
-typedef struct {
-	GPIO_TypeDef *port;
-	uint16_t pin;
-	GPIO_Direction_t direction;
-	GPIO_type_t outputtype;
-	GPIO_OutputSpeed_t outputspeed;
-	GPIO_Pull_t pullresister;
-	GPIO_AlternateFunction_t function;
-} GPIO_Config_t;
+typedef struct gpio_config{
+	GPIO_TypeDef *port = GPIOA;
+	uint16_t pin = 0U;
+	gpio_derection_t direction = GPIO_Input;
+	gpio_outputtype_t outputtype = GPIO_PushPull;
+	gpio_outputspeed_t outputspeed = GPIO_Speed_Low;
+	gpio_pullresistor_t pullresister = GPIO_NoPull;
+	gpio_alternatefunction_t function = AF0_SYSTEM;
+} gpio_config_t;
 
 
 void gpio_allport_clock_enable(void);
 void gpio_port_clock_enable(GPIO_TypeDef *port);
 
-void gpio_init(GPIO_Config_t *conf);
+void gpio_init(gpio_config_t *conf);
 void gpio_deinit(GPIO_TypeDef *port, uint16_t pin);
 
-void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode);
-void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIO_AlternateFunction_t function);
-void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode);
+void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, gpio_mode_t mode);
+void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, gpio_alternatefunction_t function);
+void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, gpio_mode_t mode);
 
 void gpio_set_pullup(GPIO_TypeDef *port, uint16_t pin);
 void gpio_set_pulldown(GPIO_TypeDef *port, uint16_t pin);

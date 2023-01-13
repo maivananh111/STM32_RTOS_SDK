@@ -27,7 +27,7 @@ typedef struct{
 	uint32_t stack_ram_used;
 	uint32_t free_ram;
 	uint32_t total_free_ram;
-} Memory_Info_t;
+} memory_info_t;
 
 uint32_t get_revid(void);
 uint32_t get_devid(void);
@@ -42,7 +42,7 @@ void embedded_flash_update_latency(void);
 
 void NVIC_Set_Priority(IRQn_Type IRQn, uint32_t PreemptPriority, uint32_t SubPriority);
 
-Memory_Info_t get_memory_info(void);
+memory_info_t get_memory_info(void);
 uint32_t get_free_heap_size(void);
 uint32_t get_used_heap_size(void);
 

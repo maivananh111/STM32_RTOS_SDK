@@ -112,8 +112,8 @@ void NVIC_Set_Priority(IRQn_Type IRQn, uint32_t PreemptPriority, uint32_t SubPri
 	__NVIC_SetPriority(IRQn, NVIC_EncodePriority(prioritygroup, PreemptPriority, SubPriority));
 }
 
-Memory_Info_t get_memory_info(void){
-	Memory_Info_t mem;
+memory_info_t get_memory_info(void){
+	memory_info_t mem;
 	char *heapend = (char*)sbrk(0);
 	char * stack_ptr = (char*)__get_MSP();
 	struct mallinfo mi = mallinfo();

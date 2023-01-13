@@ -9,20 +9,33 @@
 
 #ifdef ENABLE_EXTI
 
+#include "sdkconfig.h"
 #include "exti.h"
 #include "stdio.h"
 #include "system.h"
+#include "stm_log.h"
+
 
 #define EXTI_LINE_INDEX 6U
 
+static const char *TAG = "EXTI";
 void (*handler_callback)(uint16_t pin, void *param) = NULL;
 void *parameter = NULL;
 
 extern "C"{void EXTI_IRQHandler(uint16_t Pin);}
 
-void exti_init(GPIO_TypeDef *Port, uint16_t Pin, EXTI_EdgeDetect_t Edge, uint32_t Priority){
+return_t exti_init(GPIO_TypeDef *Port, uint16_t Pin, exti_edgedetect_t Edge, uint32_t Priority){
+	return_t ret;
 	uint8_t CRPos = 0;
 	IRQn_Type IRQn;
+
+#ifdef RTOS
+	if(Priority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+#endif
 
 	if(Pin < 4U) 					CRPos = 0;
 	else if(Pin >= 4U && Pin < 8U)  CRPos = 1;
@@ -34,7 +47,6 @@ void exti_init(GPIO_TypeDef *Port, uint16_t Pin, EXTI_EdgeDetect_t Edge, uint32_
 	else 						   IRQn = EXTI15_10_IRQn;
 
 	if(!(RCC -> APB2ENR & RCC_APB2ENR_SYSCFGEN)) RCC -> APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-
 
 	__IO uint32_t tmpreg = SYSCFG -> EXTICR[CRPos];
 
@@ -50,6 +62,8 @@ void exti_init(GPIO_TypeDef *Port, uint16_t Pin, EXTI_EdgeDetect_t Edge, uint32_
 
 	__NVIC_SetPriority(IRQn, Priority);
 	__NVIC_EnableIRQ(IRQn);
+
+	return ret;
 }
 
 void exti_deinit(GPIO_TypeDef *Port, uint16_t Pin){

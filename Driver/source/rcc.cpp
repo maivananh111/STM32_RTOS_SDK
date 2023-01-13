@@ -25,7 +25,7 @@
 
 static RCC_Config_t *_conf;
 
-Result_t rcc_init(RCC_Config_t *rcc_conf){
+return_t rcc_init(RCC_Config_t *rcc_conf){
 #if (!OVER_CLOCK)
 #if(SYSTEM_CLOCK_FREQUENCY > SYSTEM_CLOCK_FREQUENCY_MAX)
 #error "SYSTEM_CLOCK_FREQUENCY out of range. Modify System clock frequency less than or equal to SYSTEM_CLOCK_FREQUENCY_MAX in sdkconfig.h file."
@@ -41,7 +41,7 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 #error "APB2_CLOCK_FREQUENCY out of range. Modify APB2 clock frequency less than or equal to APB2_CLOCK_FREQUENCY_MAX in sdkconfig.h file."
 #endif
 
-	Result_t res = {OKE, 0U};
+	return_t ret;
 	__IO uint32_t tmpreg = 0;
 	_conf = rcc_conf;
 
@@ -50,17 +50,17 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 	 */
 	if((RCC -> CFGR & RCC_CFGR_SWS_HSE) || ((RCC -> CFGR & RCC_CFGR_SWS_PLL) && (RCC -> PLLCFGR & RCC_PLLCFGR_PLLSRC_HSE))){
 		if(!(RCC -> CR & RCC_CR_HSERDY)){
-			set_result(&res, ERR, __LINE__);
-			return res;
+			set_return(&ret, ERR, __LINE__);
+			return ret;
 		}
 	}
 
 	if(_conf -> osc_source == HSI_CRYSTAL){
 		RCC -> CR |= RCC_CR_HSION;
-		res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSIRDY, FLAG_SET, RCC_HSI_TIMEOUT);
-		if(result_is_timeout(&res)) {
-			set_result_line(&res, __LINE__);
-			return res;
+		ret = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSIRDY, FLAG_SET, RCC_HSI_TIMEOUT);
+		if(is_timeout(&ret)) {
+			set_return_line(&ret, __LINE__);
+			return ret;
 		}
 		RCC -> CR &= ~RCC_CR_HSITRIM_Msk;
 		RCC -> CR |= (_conf -> hsi_trim << RCC_CR_HSITRIM_Pos);
@@ -68,15 +68,15 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 	}
 	else if(_conf -> osc_source == HSE_CRYSTAL){
 		RCC -> CR |= RCC_CR_HSEON;
-		res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSERDY, FLAG_SET, RCC_HSE_TIMEOUT);
-		if(result_is_timeout(&res)) {
-			set_result_line(&res, __LINE__);
-			return res;
+		ret = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSERDY, FLAG_SET, RCC_HSE_TIMEOUT);
+		if(is_timeout(&ret)) {
+			set_return_line(&ret, __LINE__);
+			return ret;
 		}
 	}
 	else{
-		set_result(&res, ERR, __LINE__);
-		return res;
+		set_return(&ret, ERR, __LINE__);
+		return ret;
 	}
 
 	/**
@@ -85,10 +85,10 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 	if(_conf -> sysclock_source == PLLCLK){
 		if(!(RCC -> CFGR & RCC_CFGR_SWS_PLL)){
 			RCC -> CR &=~ RCC_CR_PLLON;
-			res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_PLLRDY, FLAG_RESET, RCC_PLL_TIMEOUT);
-			if(result_is_timeout(&res)) {
-				set_result_line(&res, __LINE__);
-				return res;
+			ret = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_PLLRDY, FLAG_RESET, RCC_PLL_TIMEOUT);
+			if(is_timeout(&ret)) {
+				set_return_line(&ret, __LINE__);
+				return ret;
 			}
 
 			tmpreg = RCC -> PLLCFGR;
@@ -98,10 +98,10 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 			RCC -> PLLCFGR = tmpreg;
 
 			RCC -> CR |= RCC_CR_PLLON;
-			res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_PLLRDY, FLAG_SET, RCC_PLL_TIMEOUT);
-			if(result_is_timeout(&res)) {
-				set_result_line(&res, __LINE__);
-				return res;
+			ret = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_PLLRDY, FLAG_SET, RCC_PLL_TIMEOUT);
+			if(is_timeout(&ret)) {
+				set_return_line(&ret, __LINE__);
+				return ret;
 			}
 		}
 	}
@@ -119,28 +119,28 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 	 */
 	if(_conf -> sysclock_source == HSI){
 		if(!(RCC -> CR & RCC_CR_HSIRDY)){
-			set_result_line(&res, __LINE__);
-			return res;
+			set_return_line(&ret, __LINE__);
+			return ret;
 		}
 	}
 	else if(_conf -> sysclock_source == HSE){
 		if(!(RCC -> CR & RCC_CR_HSERDY)){
-			set_result_line(&res, __LINE__);
-			return res;
+			set_return_line(&ret, __LINE__);
+			return ret;
 		}
 	}
 	else if(_conf -> sysclock_source == PLLCLK){
 		if(!(RCC -> CR & RCC_CR_PLLRDY)){
-			set_result_line(&res, __LINE__);
-			return res;
+			set_return_line(&ret, __LINE__);
+			return ret;
 		}
 	}
 
 	RCC -> CFGR = ((RCC -> CFGR & !RCC_CFGR_SW_Msk) | (_conf -> sysclock_source << RCC_CFGR_SW_Pos));
-	res = wait_flag_in_register_timeout(&(RCC -> CFGR), (_conf -> sysclock_source << RCC_CFGR_SW_Pos), FLAG_SET, RCC_SWS_TIMEOUT);
-	if(result_is_timeout(&res)) {
-		set_result_line(&res, __LINE__);
-		return res;
+	ret = wait_flag_in_register_timeout(&(RCC -> CFGR), (_conf -> sysclock_source << RCC_CFGR_SW_Pos), FLAG_SET, RCC_SWS_TIMEOUT);
+	if(is_timeout(&ret)) {
+		set_return_line(&ret, __LINE__);
+		return ret;
 	}
 
 	/**
@@ -148,7 +148,7 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 	 */
 	tmpreg = RCC -> CFGR;
 	tmpreg &= ~(RCC_CFGR_HPRE_Msk | RCC_CFGR_PPRE1_Msk | RCC_CFGR_PPRE2_Msk);
-	tmpreg |= (_conf -> ahb_prescaler) | (_conf -> apb1_prescaler) | (_conf -> apb2_prescaler);
+	tmpreg |= ((_conf -> ahb_prescaler + 7U) << RCC_CFGR_HPRE_Pos) | ((_conf -> apb1_prescaler + 3U) << RCC_CFGR_PPRE1_Pos) | ((_conf -> apb2_prescaler + 3U) << RCC_CFGR_PPRE2_Pos);
 	RCC -> CFGR = tmpreg;
 
 	/**
@@ -170,20 +170,20 @@ Result_t rcc_init(RCC_Config_t *rcc_conf){
 	tim_for_tick_init(SYSTICK_PRIORITY);
 #endif
 
-	return res;
+	return ret;
 }
 
-Result_t rcc_deinit(void){
-	Result_t res = {OKE, 0U};
+return_t rcc_deinit(void){
+	return_t ret;
 
 	/**
 	 * Turn on HSI (default).
 	 */
 	RCC -> CR |= RCC_CR_HSION;
-	res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSIRDY, FLAG_SET, RCC_HSI_TIMEOUT);
-	if(result_is_timeout(&res)) {
-		set_result_line(&res, __LINE__);
-		return res;
+	ret = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSIRDY, FLAG_SET, RCC_HSI_TIMEOUT);
+	if(is_timeout(&ret)) {
+		set_return_line(&ret, __LINE__);
+		return ret;
 	}
 	RCC -> CR &= ~RCC_CR_HSITRIM_Msk;
 	RCC -> CR |= (0x10U << RCC_CR_HSITRIM_Pos);
@@ -192,30 +192,30 @@ Result_t rcc_deinit(void){
 	 * Clear CFGR register.
 	 */
 	RCC -> CFGR = 0x00U;
-	res = wait_flag_in_register_timeout(&(RCC -> CFGR), 0xFFFFFFFFU, FLAG_RESET, RCC_SWS_TIMEOUT);
-	if(result_is_timeout(&res)) {
-		set_result_line(&res, __LINE__);
-		return res;
+	ret = wait_flag_in_register_timeout(&(RCC -> CFGR), 0xFFFFFFFFU, FLAG_RESET, RCC_SWS_TIMEOUT);
+	if(is_timeout(&ret)) {
+		set_return_line(&ret, __LINE__);
+		return ret;
 	}
 
 	/**
 	 * Turn off HSE.
 	 */
 	RCC -> CR &=~ RCC_CR_HSEON;
-	res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSERDY, FLAG_RESET, RCC_HSE_TIMEOUT);
-	if(result_is_timeout(&res)) {
-		set_result_line(&res, __LINE__);
-		return res;
+	ret = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_HSERDY, FLAG_RESET, RCC_HSE_TIMEOUT);
+	if(is_timeout(&ret)) {
+		set_return_line(&ret, __LINE__);
+		return ret;
 	}
 
 	/**
 	 * Turn off PLL.
 	 */
 	RCC -> CR &=~ RCC_CR_PLLON;
-	res = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_PLLRDY, FLAG_RESET, RCC_PLL_TIMEOUT);
-	if(result_is_timeout(&res)) {
-		set_result_line(&res, __LINE__);
-		return res;
+	ret = wait_flag_in_register_timeout(&(RCC -> CR), RCC_CR_PLLRDY, FLAG_RESET, RCC_PLL_TIMEOUT);
+	if(is_timeout(&ret)) {
+		set_return_line(&ret, __LINE__);
+		return ret;
 	}
 
 	RCC -> PLLCFGR = RCC_PLLCFGR_PLLM_4 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLQ_2;
@@ -231,10 +231,10 @@ Result_t rcc_deinit(void){
 	tim_for_tick_init(SYSTICK_PRIORITY);
 #endif
 
-	return res;
+	return ret;
 }
 
-uint32_t rcc_get_bus_frequency(Bus_Clock_t bus){
+uint32_t rcc_get_bus_frequency(rcc_busclock_t bus){
 	switch(bus){
 		case SYSCLK:
 			if(_conf -> osc_source == HSE_CRYSTAL){ // HSE.

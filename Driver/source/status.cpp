@@ -17,7 +17,7 @@ uint32_t (*GetCounterFunction)(void) = get_tick;
 
 
 /**
- * @fn Status_t check_flag_in_register(volatile uint32_t*, uint32_t, FlagLevel_t)
+ * @fn status_t check_flag_in_register(volatile uint32_t*, uint32_t, flaglevel_t)
  * @brief
  *
  * @pre
@@ -27,13 +27,13 @@ uint32_t (*GetCounterFunction)(void) = get_tick;
  * @param StatusCheck
  * @return
  */
-Status_t check_flag_in_register(__IO uint32_t *Register, uint32_t Flag, FlagLevel_t StatusCheck){
+status_t check_flag_in_register(__IO uint32_t *Register, uint32_t Flag, flaglevel_t StatusCheck){
 	if((StatusCheck == FLAG_SET)? ((*Register & Flag) != 0U) : ((*Register & Flag) == 0U)) return OKE;
 	return ERR;
 }
 
 /**
- * @fn void wait_flag_in_register(volatile uint32_t*, uint32_t, FlagLevel_t)
+ * @fn void wait_flag_in_register(volatile uint32_t*, uint32_t, flaglevel_t)
  * @brief
  *
  * @pre
@@ -42,12 +42,12 @@ Status_t check_flag_in_register(__IO uint32_t *Register, uint32_t Flag, FlagLeve
  * @param Flag
  * @param Level
  */
-void wait_flag_in_register(__IO uint32_t *Register, uint32_t Flag, FlagLevel_t Level){
+void wait_flag_in_register(__IO uint32_t *Register, uint32_t Flag, flaglevel_t Level){
 	while((Level == FLAG_RESET)?((*Register & Flag)) : (!(*Register & Flag)));
 }
 
 /**
- * @fn Result_t wait_flag_in_register_timeout(volatile uint32_t*, uint32_t, FlagLevel_t, uint16_t)
+ * @fn return_t wait_flag_in_register_timeout(volatile uint32_t*, uint32_t, flaglevel_t, uint16_t)
  * @brief
  *
  * @pre
@@ -58,8 +58,8 @@ void wait_flag_in_register(__IO uint32_t *Register, uint32_t Flag, FlagLevel_t L
  * @param TimeOut
  * @return
  */
-Result_t wait_flag_in_register_timeout(__IO uint32_t *Register, uint32_t Flag, FlagLevel_t Level, uint16_t TimeOut){
-	Result_t res = {OKE, 0};
+return_t wait_flag_in_register_timeout(__IO uint32_t *Register, uint32_t Flag, flaglevel_t Level, uint16_t TimeOut){
+	return_t res = {OKE, 0};
 
 	__IO uint32_t time = GetCounterFunction();
 	while((Level == FLAG_RESET)?(*Register & Flag) : (!(*Register & Flag))){
@@ -74,7 +74,7 @@ Result_t wait_flag_in_register_timeout(__IO uint32_t *Register, uint32_t Flag, F
 }
 
 /**
- * @fn Result_t wait_check_flag_in_register_timeout(volatile uint32_t*, uint32_t, FlagLevel_t, volatile uint32_t*, uint32_t, FlagLevel_t, uint16_t)
+ * @fn return_t wait_check_flag_in_register_timeout(volatile uint32_t*, uint32_t, flaglevel_t, volatile uint32_t*, uint32_t, flaglevel_t, uint16_t)
  * @brief
  *
  * @pre
@@ -88,9 +88,9 @@ Result_t wait_flag_in_register_timeout(__IO uint32_t *Register, uint32_t Flag, F
  * @param TimeOut
  * @return
  */
-Result_t wait_check_flag_in_register_timeout(__IO uint32_t *RegisterCheck, uint32_t FlagCheck, FlagLevel_t LevelCheck,
-									  	  	 __IO uint32_t *RegisterWait, uint32_t FlagWait, FlagLevel_t LevelWait,uint16_t TimeOut){
-	Result_t res = {OKE};
+return_t wait_check_flag_in_register_timeout(__IO uint32_t *RegisterCheck, uint32_t FlagCheck, flaglevel_t LevelCheck,
+									  	  	 __IO uint32_t *RegisterWait, uint32_t FlagWait, flaglevel_t LevelWait,uint16_t TimeOut){
+	return_t res = {OKE};
 
 	__IO uint32_t time = GetCounterFunction();
 	while((LevelWait == FLAG_RESET)? (*RegisterWait & FlagWait) : (!(*RegisterWait & FlagWait))){
@@ -110,7 +110,7 @@ Result_t wait_check_flag_in_register_timeout(__IO uint32_t *RegisterCheck, uint3
 }
 
 /**
- * @fn void set_result(Result_t*, Status_t, uint32_t)
+ * @fn void set_return(return_t*, status_t, uint32_t)
  * @brief
  *
  * @pre
@@ -119,13 +119,13 @@ Result_t wait_check_flag_in_register_timeout(__IO uint32_t *RegisterCheck, uint3
  * @param Status
  * @param CodeLine
  */
-void set_result(Result_t *res, Status_t Status, uint32_t CodeLine){
+void set_return(return_t *res, status_t Status, uint32_t CodeLine){
 	res -> Status = Status;
-	res -> CodeLine = CodeLine;
+	res -> Line = CodeLine;
 }
 
 /**
- * @fn void set_result_line(Result_t*, uint16_t)
+ * @fn void set_return_line(return_t*, uint16_t)
  * @brief
  *
  * @pre
@@ -133,12 +133,12 @@ void set_result(Result_t *res, Status_t Status, uint32_t CodeLine){
  * @param res
  * @param line
  */
-void set_result_line(Result_t *res, uint16_t line){
-	res -> CodeLine = line;
+void set_return_line(return_t *res, uint16_t line){
+	res -> Line = line;
 }
 
 /**
- * @fn bool result_is_err(Result_t*)
+ * @fn bool result_is_err(return_t*)
  * @brief
  *
  * @pre
@@ -146,13 +146,13 @@ void set_result_line(Result_t *res, uint16_t line){
  * @param res
  * @return
  */
-bool result_is_err(Result_t *res){
+bool is_err(return_t *res){
 	if(res -> Status == ERR) return true;
 	return false;
 }
 
 /**
- * @fn bool result_is_oke(Result_t*)
+ * @fn bool result_is_oke(return_t*)
  * @brief
  *
  * @pre
@@ -160,13 +160,13 @@ bool result_is_err(Result_t *res){
  * @param res
  * @return
  */
-bool result_is_oke(Result_t *res){
+bool is_oke(return_t *res){
 	if(res -> Status == OKE) return true;
 	return false;
 }
 
 /**
- * @fn bool result_is_timeout(Result_t*)
+ * @fn bool result_is_timeout(return_t*)
  * @brief
  *
  * @pre
@@ -174,13 +174,13 @@ bool result_is_oke(Result_t *res){
  * @param res
  * @return
  */
-bool result_is_timeout(Result_t *res){
+bool is_timeout(return_t *res){
 	if(res -> Status == TIMEOUT) return true;
 	return false;
 }
 
 /**
- * @fn bool result_is_nosupport(Result_t*)
+ * @fn bool result_is_nosupport(return_t*)
  * @brief
  *
  * @pre
@@ -188,13 +188,13 @@ bool result_is_timeout(Result_t *res){
  * @param res
  * @return
  */
-bool result_is_nosupport(Result_t *res){
-	if(res -> Status == NOSUPPORT) return true;
+bool is_unsupport(return_t *res){
+	if(res -> Status == UNSUPPORT) return true;
 	return false;
 }
 
 /**
- * @fn bool result_is_busy(Result_t*)
+ * @fn bool result_is_busy(return_t*)
  * @brief
  *
  * @pre
@@ -202,13 +202,13 @@ bool result_is_nosupport(Result_t *res){
  * @param res
  * @return
  */
-bool result_is_busy(Result_t *res){
+bool is_busy(return_t *res){
 	if(res -> Status == BUSY) return true;
 	return false;
 }
 
 /**
- * @fn bool result_is_ready(Result_t*)
+ * @fn bool result_is_ready(return_t*)
  * @brief
  *
  * @pre
@@ -216,7 +216,7 @@ bool result_is_busy(Result_t *res){
  * @param res
  * @return
  */
-bool result_is_ready(Result_t *res){
+bool is_ready(return_t *res){
 	if(res -> Status == READY) return true;
 	return false;
 }

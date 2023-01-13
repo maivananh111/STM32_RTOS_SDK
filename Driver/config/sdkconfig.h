@@ -29,7 +29,7 @@
 #define TOTAL_HEAP_SIZE                 (128U * 1024U)
 #define RTOS_HEAP_SIZE                  (64U * 1024U)
 
-#define MAX_SYSTEM_INTERRUPT_PRIORITY   4 // Your system interrupt priority must be greater than this number.
+#define RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY   4 // Your system interrupt priority must be greater than this number.
 #define MAX_PRIORITY                    32
 #define byte_to_word(x)                 (x/4)
 #endif
@@ -71,11 +71,11 @@
 #define PLLP                            2U
 #define PLLQ                            4U
 
-#define SYSTEM_CLOCK_FREQUENCY          168000000U // Hz
-#define AHB_CLOCK_FREQUENCY          	168000000U // Hz
-#define AHB_PRESCALER          			RCC_CFGR_HPRE_DIV1 // Hz (AHB is HCLK)
-#define APB1_PRESCALER          		RCC_CFGR_PPRE1_DIV4  // Hz (APB1 is PCLK1)
-#define APB2_PRESCALER          		RCC_CFGR_PPRE2_DIV2  // Hz (APB1 is PCLK2)
+#define SYSTEM_CLOCK_FREQUENCY          168000000U  // Hz
+#define AHB_CLOCK_FREQUENCY          	168000000U  // Hz
+#define AHB_PRESCALER          			Clock_Div_1 // Hz (AHB is HCLK)
+#define APB1_PRESCALER          		Clock_Div_4 // Hz (APB1 is PCLK1)
+#define APB2_PRESCALER          		Clock_Div_2 // Hz (APB1 is PCLK2)
 
 /**
  * Timer alternate for system tick if you use RTOS.

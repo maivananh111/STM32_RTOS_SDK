@@ -24,22 +24,22 @@ extern "C"{
 typedef enum{
 	FLAG_RESET = 0,
 	FLAG_SET,
-} FlagLevel_t;
+} flaglevel_t;
 
 typedef enum{
 	ERR = 0,
 	OKE,
 	TIMEOUT,
-	NOSUPPORT,
+	UNSUPPORT,
 	BUSY,
 	READY
-} Status_t;
+} status_t;
 
 
 typedef struct{
-	Status_t Status;
-	uint32_t CodeLine;
-} Result_t;
+	status_t Status = OKE;
+	uint32_t Line = 0U;
+} return_t;
 
 enum{
 	NO_TIMEOUT = 0,
@@ -47,24 +47,24 @@ enum{
 };
 
 
-Status_t check_flag_in_register(__IO uint32_t *Register, uint32_t Flag, FlagLevel_t StatusCheck);
+status_t check_flag_in_register(__IO uint32_t *Register, uint32_t Flag, flaglevel_t StatusCheck);
 
-void wait_flag_in_register(__IO uint32_t *Register, uint32_t Flag, FlagLevel_t Level);
-Result_t wait_flag_in_register_timeout(__IO uint32_t *Register, uint32_t Flag, FlagLevel_t Level, uint16_t TimeOut);
-Result_t wait_check_flag_in_register_timeout(__IO uint32_t *RegisterCheck, uint32_t FlagCheck, FlagLevel_t LevelCheck,
-									  __IO uint32_t *RegisterWait, uint32_t FlagWait, FlagLevel_t LevelWait,uint16_t TimeOut);
-
-
-void set_result(Result_t *res, Status_t Status, uint32_t CodeLine);
-void set_result_line(Result_t *res, uint16_t line);
+void wait_flag_in_register(__IO uint32_t *Register, uint32_t Flag, flaglevel_t Level);
+return_t wait_flag_in_register_timeout(__IO uint32_t *Register, uint32_t Flag, flaglevel_t Level, uint16_t TimeOut);
+return_t wait_check_flag_in_register_timeout(__IO uint32_t *RegisterCheck, uint32_t FlagCheck, flaglevel_t LevelCheck,
+									  __IO uint32_t *RegisterWait, uint32_t FlagWait, flaglevel_t LevelWait,uint16_t TimeOut);
 
 
-bool result_is_err(Result_t *res);
-bool result_is_oke(Result_t *res);
-bool result_is_timeout(Result_t *res);
-bool result_is_nosupport(Result_t *res);
-bool result_is_busy(Result_t *res);
-bool result_is_ready(Result_t *res);
+void set_return(return_t *res, status_t Status, uint32_t CodeLine);
+void set_return_line(return_t *res, uint16_t line);
+
+
+bool is_err(return_t *res);
+bool is_oke(return_t *res);
+bool is_timeout(return_t *res);
+bool is_unsupport(return_t *res);
+bool is_busy(return_t *res);
+bool is_ready(return_t *res);
 
 
 

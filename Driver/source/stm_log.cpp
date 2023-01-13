@@ -424,15 +424,15 @@ void STM_LOGR(const char *tag,  const char *format, ...){
 
 
 /**
- * @fn void STM_LOG_RES(Result_t)
+ * @fn void STM_LOG_RES(return_t)
  * @brief
  *
  * @pre
  * @post
  * @param res
  */
-void STM_LOG_RES(Result_t res){
-	STM_LOGR("RESULT", "Return %s, time = %d[%s -> %s -> %d]", Result_Str[res.Status], res.CodeLine);
+void STM_LOG_RES(return_t res){
+	STM_LOGR("RESULT", "Return %s, time = %d[%s -> %s -> %d]", Result_Str[res.Status], res.Line);
 }
 
 /**
@@ -443,7 +443,7 @@ void STM_LOG_RES(Result_t res){
  * @post
  */
 void STM_LOG_MEM(void){
-	Memory_Info_t mem = get_memory_info();
+	memory_info_t mem = get_memory_info();
 	STM_LOGM("MEMORY USED", "heap_ram_used %lu, prog_ram_used %lu, stack_ram_used %lu.", mem.heap_ram_used, mem.prog_ram_used, mem.stack_ram_used);
 	STM_LOGM("MEMORY FREE", "total_free_ram %lu, free_ram %lu.", mem.total_free_ram, mem.free_ram);
 }

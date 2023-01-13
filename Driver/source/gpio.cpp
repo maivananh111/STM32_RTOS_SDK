@@ -53,7 +53,7 @@ void gpio_port_clock_enable(GPIO_TypeDef *port){
  * @post
  * @param conf gpio configuration struct.
  */
-void gpio_init(GPIO_Config_t *conf){
+void gpio_init(gpio_config_t *conf){
 	conf -> port -> MODER &=~ (3U << (conf -> pin*2));
 	conf -> port -> MODER |= (conf -> direction << (conf -> pin*2));
 
@@ -119,7 +119,7 @@ void gpio_deinit(GPIO_TypeDef *port, uint16_t pin){
  * @param pin  gpio pin selected.
  * @param mode gpio pin mode.
  */
-void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode){
+void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, gpio_mode_t mode){
 	__IO uint32_t tmpreg = 0U;
 	/* *************************************************** */
 	if(mode <=  GPIO_INPUT_PULLDOWN){ // GPIO_INPUT.
@@ -173,7 +173,7 @@ void gpio_set_mode(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode){
  * @param pin  gpio pin selected.
  * @param function Alternate function for gpio pin.
  */
-void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIO_AlternateFunction_t function){
+void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, gpio_alternatefunction_t function){
 	port -> MODER &=~ (3U << (pin*2));
 	port -> MODER |=  (2U << (pin*2));
 
@@ -200,7 +200,7 @@ void gpio_set_alternatefunction(GPIO_TypeDef *port, uint16_t pin, GPIO_Alternate
  * @param pin  gpio pin selected.
  * @param mode gpio mode(type).
  */
-void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, GPIO_Mode_t mode){
+void gpio_set_alternatefunction_type(GPIO_TypeDef *port, uint16_t pin, gpio_mode_t mode){
 	if(mode == GPIO_OUTPUT_OPENDRAIN) port -> OTYPER |= (1U<<pin);
 	else if(mode == GPIO_OUTPUT_PUSHPULL) port -> OTYPER &=~ (1U<<pin);
 }
