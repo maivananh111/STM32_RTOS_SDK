@@ -75,11 +75,11 @@ return_t DMA::init(dma_config_t *conf){
 
 	ClearAllIntrFlag();
 
-	if(_conf->dma == DMA1){
+	if(_dma == DMA1){
 		if(Stream == 7U) _IRQn = DMA1_Stream7_IRQn;
 		else _IRQn = (IRQn_Type)(Stream + 11U);
 	}
-	else if(_conf->dma == DMA2){
+	else if(_dma == DMA2){
 		if(Stream > 4U) _IRQn = (IRQn_Type)(Stream + 63U);
 		else _IRQn = (IRQn_Type)(Stream + 56U);
 	}
@@ -168,7 +168,7 @@ return_t DMA::poll_for_tranfer(dma_interruptselect_t PollLevel, uint32_t TimeOut
 	}
 
 	if(_conf -> stream -> CR & DMA_SxCR_CIRC){
-		set_return(&ret, UNSUPPORT, __LINE__);
+		set_return(&ret, UNSUPPORTED, __LINE__);
 		return ret;
 	}
 
@@ -238,14 +238,14 @@ dma_config_t *DMA::get_config(void){
 void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, dma_t dmaptr){
 	uint8_t num_stream = (((uint32_t)stream & 0xFFU) - 16U) / 24U;
 	uint8_t index = Channel_Index[num_stream];
-	dma_event_t event = DMA_Event_NoEvent;
+	dma_event_t event = DMA_EVENT_NOEVENT;
 
 	if((num_stream < 4)? (dma -> LISR & (DMA_LISR_HTIF0 << index)) : (dma -> HISR & (DMA_HISR_HTIF4 << index))){
 		if(stream -> CR & DMA_SxCR_HTIE){
 			(num_stream < 4)? (dma -> LIFCR = (DMA_LIFCR_CHTIF0 << index)) : (dma -> HIFCR = (DMA_HIFCR_CHTIF4 << index));
 			if(!(stream -> CR & DMA_SxCR_CIRC)){
 				stream -> CR &=~ DMA_SxCR_HTIE;
-				event = DMA_Event_Half_Tranfer;
+				event = DMA_EVENT_HALF_TRANFER;
 				goto EventCB;
 			}
 		}
@@ -257,7 +257,7 @@ void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, dma_t dmaptr)
 		(num_stream < 4)? (dma -> LIFCR = (0x3FU << index)) : (dma -> HIFCR = (0x3FU << index));
 		if(!(stream -> CR & DMA_SxCR_CIRC)){
 			stream -> CR &=~ DMA_SxCR_TCIE;
-			event = DMA_Event_Tranfer_Complete;
+			event = DMA_EVENT_TRANFER_COMPLETE;
 			goto EventCB;
 		}
 	}
@@ -265,12 +265,12 @@ void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, dma_t dmaptr)
 	if((num_stream < 4)? (dma -> LISR & (DMA_LISR_TEIF0 << index)) : (dma -> HISR & (DMA_HISR_TEIF4 << index))){
 		stream -> CR &=~ DMA_SxCR_TEIE;
 		(num_stream < 4)? (dma -> LIFCR = (DMA_LIFCR_CTEIF0 << index)) : (dma -> HIFCR = (DMA_HIFCR_CTEIF4 << index));
-		event = DMA_Event_Tranfer_Error;
+		event = DMA_EVENT_TRANFER_ERROR;
 		goto EventCB;
 	}
 
 	EventCB:
-	dmaptr -> Event_Callback(dmaptr -> Parameter, event);
+	if(dmaptr -> Event_Callback != NULL) dmaptr -> Event_Callback(dmaptr -> Parameter, event);
 }
 
 /* DMA1 IRQ HANDLER */

@@ -138,7 +138,7 @@ void set_return_line(return_t *res, uint16_t line){
 }
 
 /**
- * @fn bool result_is_err(return_t*)
+ * @fn bool is_err(return_t*)
  * @brief
  *
  * @pre
@@ -152,7 +152,7 @@ bool is_err(return_t *res){
 }
 
 /**
- * @fn bool result_is_oke(return_t*)
+ * @fn bool is_oke(return_t*)
  * @brief
  *
  * @pre
@@ -166,7 +166,7 @@ bool is_oke(return_t *res){
 }
 
 /**
- * @fn bool result_is_timeout(return_t*)
+ * @fn bool is_timeout(return_t*)
  * @brief
  *
  * @pre
@@ -180,7 +180,7 @@ bool is_timeout(return_t *res){
 }
 
 /**
- * @fn bool result_is_nosupport(return_t*)
+ * @fn bool is_unsupported(return_t*)
  * @brief
  *
  * @pre
@@ -188,13 +188,13 @@ bool is_timeout(return_t *res){
  * @param res
  * @return
  */
-bool is_unsupport(return_t *res){
-	if(res -> Status == UNSUPPORT) return true;
+bool is_unsupported(return_t *res){
+	if(res -> Status == UNSUPPORTED) return true;
 	return false;
 }
 
 /**
- * @fn bool result_is_busy(return_t*)
+ * @fn bool is_busy(return_t*)
  * @brief
  *
  * @pre
@@ -208,7 +208,7 @@ bool is_busy(return_t *res){
 }
 
 /**
- * @fn bool result_is_ready(return_t*)
+ * @fn bool is_ready(return_t*)
  * @brief
  *
  * @pre
@@ -221,6 +221,19 @@ bool is_ready(return_t *res){
 	return false;
 }
 
+/**
+ * @fn bool is_unavailable(return_t*)
+ * @brief
+ *
+ * @pre
+ * @post
+ * @param res
+ * @return
+ */
+bool is_unavailable(return_t *res){
+	if(res -> Status == UNAVAILABLE) return true;
+	return false;
+}
 
 
 

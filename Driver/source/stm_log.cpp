@@ -16,7 +16,6 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-
 static log_type_t logi = SIMP_GREEN;	// Information.
 static log_type_t logw = SIMP_YELLOW;   // Warning.
 static log_type_t loge = SIMP_RED;		// Error.
@@ -34,7 +33,7 @@ static const char *Result_Str[6] = {
 	"BUSY",
 	"READY"
 };
-void (*LOG)(char*str);
+void (*LOG)(char *str);
 static const char *COLOR_END = "\033[0m";
 static const char *LOG_COLOR[] = {
 	"\033[0;30m",
@@ -119,6 +118,7 @@ void stm_set_log(char *func, log_type_t log_type){
  * @param tag
  * @param format
  */
+
 void STM_LOG(log_type_t log_type, const char *tag, const char *format, ...){
 #if LOG_TIME
 	uint32_t time = get_tick();
@@ -173,13 +173,13 @@ void STM_LOGI(const char *tag,  const char *format, ...){
 
 	uint8_t color_start_length = strlen(LOG_COLOR[logi]);
 #if LOG_TIME
-	uint16_t totallen = (color_start_length + 2 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
-	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s [%10lu] %s: %s%s\n\r", LOG_COLOR[logi], "I", time, tag, Temp_buffer, COLOR_END);
+	uint16_t totallen = (color_start_length + 7 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
+	char *Output_buffer = (char *)malloc(totallen + 1);
+	sprintf(Output_buffer, "%s%s [%lu] %s: %s%s\n\r", LOG_COLOR[logi], "INFOR ", time, tag, Temp_buffer, COLOR_END);
 #else
-	uint16_t totallen = (color_start_length + strlen(tag) + 2 + 2 + length + 4 + 2) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + strlen(tag) + 2 + length + 4 + 2) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logi], "I", tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logi], "INFOR ", tag, Temp_buffer, COLOR_END);
 #endif
 	Output_buffer[totallen] = '\0';
 
@@ -212,13 +212,13 @@ void STM_LOGW(const char *tag,  const char *format, ...){
 
 	uint8_t color_start_length = strlen(LOG_COLOR[logw]);
 #if LOG_TIME
-	uint16_t totallen = (color_start_length + 2 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s [%10lu] %s: %s%s\n\r", LOG_COLOR[logw], "W", time, tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s [%lu] %s: %s%s\n\r", LOG_COLOR[logw], "WARN  ", time, tag, Temp_buffer, COLOR_END);
 #else
-	uint16_t totallen = (color_start_length + strlen(tag) + 2 + 2 + length + 4 + 2) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + strlen(tag) + 2 + length + 4 + 2) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logw], "W", tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logw], "WARN  ", tag, Temp_buffer, COLOR_END);
 #endif
 	Output_buffer[totallen] = '\0';
 
@@ -251,13 +251,13 @@ void STM_LOGE(const char *tag,  const char *format, ...){
 
 	uint8_t color_start_length = strlen(LOG_COLOR[loge]);
 #if LOG_TIME
-	uint16_t totallen = (color_start_length + 2 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s [%10lu] %s: %s%s\n\r", LOG_COLOR[loge], "E", time, tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s [%lu] %s: %s%s\n\r", LOG_COLOR[loge], "ERROR ", time, tag, Temp_buffer, COLOR_END);
 #else
-	uint16_t totallen = (color_start_length + strlen(tag) + 2 + 2 + length + 4 + 2) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + strlen(tag) + 2 + length + 4 + 2) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[loge], "E", tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[loge], "ERROR ", tag, Temp_buffer, COLOR_END);
 #endif
 	Output_buffer[totallen] = '\0';
 
@@ -290,13 +290,13 @@ void STM_LOGD(const char *tag,  const char *format, ...){
 
 	uint8_t color_start_length = strlen(LOG_COLOR[logd]);
 #if LOG_TIME
-	uint16_t totallen = (color_start_length + 2 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s [%10lu] %s: %s%s\n\r", LOG_COLOR[logd], "D", time, tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s [%lu] %s: %s%s\n\r", LOG_COLOR[logd], "DEBUG ", time, tag, Temp_buffer, COLOR_END);
 #else
-	uint16_t totallen = (color_start_length + strlen(tag) + 2 + 2 + length + 4 + 2) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + strlen(tag) + 2 + length + 4 + 2) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logd], "D", tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logd], "DEBUG ", tag, Temp_buffer, COLOR_END);
 #endif
 	Output_buffer[totallen] = '\0';
 
@@ -329,13 +329,13 @@ void STM_LOGM(const char *tag,  const char *format, ...){
 
 	uint8_t color_start_length = strlen(LOG_COLOR[logm]);
 #if LOG_TIME
-	uint16_t totallen = (color_start_length + 2 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s [%10lu] %s: %s%s\n\r", LOG_COLOR[logm], "M", time, tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s [%lu] %s: %s%s\n\r", LOG_COLOR[logm], "MEMORY", time, tag, Temp_buffer, COLOR_END);
 #else
-	uint16_t totallen = (color_start_length + strlen(tag) + 2 + 2 + length + 4 + 2) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + strlen(tag) + 2 + length + 4 + 2) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logm], "M", tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logm], "MEMORY", tag, Temp_buffer, COLOR_END);
 #endif
 	Output_buffer[totallen] = '\0';
 
@@ -368,13 +368,13 @@ void STM_LOGP(const char *tag,  const char *format, ...){
 
 	uint8_t color_start_length = strlen(LOG_COLOR[logp]);
 #if LOG_TIME
-	uint16_t totallen = (color_start_length + 2 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s [%10lu] %s: %s%s\n\r", LOG_COLOR[logp], "P", time, tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s [%lu] %s: %s%s\n\r", LOG_COLOR[logp], "PARAM ", time, tag, Temp_buffer, COLOR_END);
 #else
-	uint16_t totallen = (color_start_length + strlen(tag) + 2 + 2 + length + 4 + 2) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + strlen(tag) + 2 + length + 4 + 2) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logp], "P", tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logp], "PARAM ", tag, Temp_buffer, COLOR_END);
 #endif
 	Output_buffer[totallen] = '\0';
 
@@ -407,13 +407,13 @@ void STM_LOGR(const char *tag,  const char *format, ...){
 
 	uint8_t color_start_length = strlen(LOG_COLOR[logr]);
 #if LOG_TIME
-	uint16_t totallen = (color_start_length + 2 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + 15 + strlen(tag) + 2 + length + 4) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s [%10lu] %s: %s%s\n\r", LOG_COLOR[logr], "R", time, tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s [%lu] %s: %s%s\n\r", LOG_COLOR[logr], "RESULT", time, tag, Temp_buffer, COLOR_END);
 #else
-	uint16_t totallen = (color_start_length + strlen(tag) + 2 + 2 + length + 4 + 2) * sizeof(char);
+	uint16_t totallen = (color_start_length + 7 + strlen(tag) + 2 + length + 4 + 2) * sizeof(char);
 	char *Output_buffer = (char *)malloc(totallen+1);
-	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logr], "R", tag, Temp_buffer, COLOR_END);
+	sprintf(Output_buffer, "%s%s %s: %s%s\n\r", LOG_COLOR[logr], "RESULT", tag, Temp_buffer, COLOR_END);
 #endif
 	Output_buffer[totallen] = '\0';
 
@@ -444,8 +444,8 @@ void STM_LOG_RES(return_t res){
  */
 void STM_LOG_MEM(void){
 	memory_info_t mem = get_memory_info();
-	STM_LOGM("MEMORY USED", "heap_ram_used %lu, prog_ram_used %lu, stack_ram_used %lu.", mem.heap_ram_used, mem.prog_ram_used, mem.stack_ram_used);
-	STM_LOGM("MEMORY FREE", "total_free_ram %lu, free_ram %lu.", mem.total_free_ram, mem.free_ram);
+	STM_LOGM("USED", "heap_ram_used %lu, prog_ram_used %lu, stack_ram_used %lu.", mem.heap_ram_used, mem.prog_ram_used, mem.stack_ram_used);
+	STM_LOGM("FREE", "total_free_ram %lu, free_ram %lu.", mem.total_free_ram, mem.free_ram);
 }
 
 

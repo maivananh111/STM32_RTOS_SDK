@@ -30,9 +30,10 @@ typedef enum{
 	ERR = 0,
 	OKE,
 	TIMEOUT,
-	UNSUPPORT,
+	UNSUPPORTED,
 	BUSY,
-	READY
+	READY,
+	UNAVAILABLE,
 } status_t;
 
 
@@ -62,10 +63,10 @@ void set_return_line(return_t *res, uint16_t line);
 bool is_err(return_t *res);
 bool is_oke(return_t *res);
 bool is_timeout(return_t *res);
-bool is_unsupport(return_t *res);
+bool is_unsupported(return_t *res);
 bool is_busy(return_t *res);
 bool is_ready(return_t *res);
-
+bool is_unavailable(return_t *res);
 
 
 #ifdef __cplusplus

@@ -58,8 +58,13 @@ int main(void){
 
 #endif
 
+
+#if RTOS
 	app_main();
 	vTaskStartScheduler();
+#else
+	app_main();
+#endif
 }
 
 
@@ -108,6 +113,7 @@ static void uart_log(char *log){
 		while(!(log_uart -> SR & USART_SR_TC));
 	}
 }
+
 #endif
 
 

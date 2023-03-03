@@ -76,14 +76,13 @@ typedef enum{
 } dma_interruptselect_t;
 
 typedef enum{
-	DMA_Event_NoEvent,
-	DMA_Event_Tranfer_Complete,
-	DMA_Event_Half_Tranfer,
-	DMA_Event_Tranfer_Error,
+	DMA_EVENT_NOEVENT,
+	DMA_EVENT_TRANFER_COMPLETE,
+	DMA_EVENT_HALF_TRANFER,
+	DMA_EVENT_TRANFER_ERROR,
 } dma_event_t;
 
 typedef struct {
-	DMA_TypeDef           *dma;
 	DMA_Stream_TypeDef 	  *stream;
 	dma_channel_t 		  channel;
 	dma_direction_t 	  direction = DMA_MEM_TO_PERIPH;
@@ -141,84 +140,68 @@ void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, dma_t dmaptr)
 /* DMA1 IRQ HANDLER */
 #ifdef ENABLE_DMA1_STREAM0
 void DMA1_Stream0_IRQHandler(void);
-extern DMA dma1_0;
 extern dma_t dma1_stream0;
 #endif
 #ifdef ENABLE_DMA1_STREAM1
 void DMA1_Stream1_IRQHandler(void);
-extern DMA dma1_1;
 extern dma_t dma1_stream1;
 #endif
 #ifdef ENABLE_DMA1_STREAM2
 void DMA1_Stream2_IRQHandler(void);
-extern DMA dma1_2;
 extern dma_t dma1_stream2;
 #endif
 #ifdef ENABLE_DMA1_STREAM3
 void DMA1_Stream3_IRQHandler(void);
-extern DMA dma1_3;
 extern dma_t dma1_stream3;
 #endif
 #ifdef ENABLE_DMA1_STREAM4
 void DMA1_Stream4_IRQHandler(void);
-extern DMA dma1_4;
 extern dma_t dma1_stream4;
 #endif
 #ifdef ENABLE_DMA1_STREAM5
 void DMA1_Stream5_IRQHandler(void);
-extern DMA dma1_5;
 extern dma_t dma1_stream5;
 #endif
 #ifdef ENABLE_DMA1_STREAM6
 void DMA1_Stream6_IRQHandler(void);
-extern DMA dma1_6;
 extern dma_t dma1_stream6;
 #endif
 #ifdef ENABLE_DMA1_STREAM7
 void DMA1_Stream7_IRQHandler(void);
-extern DMA dma1_7;
 extern dma_t dma1_stream7;
 #endif
 
 /* DMA2 IRQ HANDLER */
 #ifdef ENABLE_DMA2_STREAM0
 void DMA2_Stream0_IRQHandler(void);
-extern DMA dma2_0;
 extern dma_t dma2_stream0;
 #endif
 #ifdef ENABLE_DMA2_STREAM1
 void DMA2_Stream1_IRQHandler(void);
-extern DMA dma2_1;
 extern dma_t dma2_stream1;
 #endif
 #ifdef ENABLE_DMA2_STREAM2
 void DMA2_Stream2_IRQHandler(void);
-extern DMA dma2_2;
 extern dma_t dma2_stream2;
 #endif
 #ifdef ENABLE_DMA2_STREAM3
 void DMA2_Stream3_IRQHandler(void);
-extern DMA dma2_3;
 extern dma_t dma2_stream3;
 #endif
 #ifdef ENABLE_DMA2_STREAM4
 void DMA2_Stream4_IRQHandler(void);
-extern DMA dma2_4;
 extern dma_t dma2_stream4;
 #endif
 #ifdef ENABLE_DMA2_STREAM5
 void DMA2_Stream5_IRQHandler(void);
-extern DMA dma2_5;
 extern dma_t dma2_stream5;
 #endif
 #ifdef ENABLE_DMA2_STREAM6
 void DMA2_Stream6_IRQHandler(void);
-extern DMA dma2_6;
 extern dma_t dma2_stream6;
 #endif
 #ifdef ENABLE_DMA2_STREAM7
 void DMA2_Stream7_IRQHandler(void);
-extern DMA dma2_7;
 extern dma_t dma2_stream7;
 #endif
 

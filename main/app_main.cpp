@@ -6,22 +6,54 @@
  */
 
 #include "main.h"
-
-#include "exti.h"
 #include "stdlib.h"
+
+#include "gpio.h"
+#include "exti.h"
+#include "tim.h"
 
 
 static const char *TAG = "MAIN";
 char *aloc_buf = NULL;
 
 QueueHandle_t exti_queue = NULL;
-volatile uint32_t cnt = 0;
 
+
+dma_config_t dma1_stream0_channel6_conf = {
+	.stream = DMA1_Stream0,
+	.channel = DMA_Channel6,
+	.direction = DMA_MEM_TO_PERIPH,
+	.mode = DMA_CIRCULAR,
+	.datasize = DMA_DATA32BIT,
+	.interruptselect = DMA_TRANSFER_COMPLETE_INTERRUPT,
+	.interruptpriority = 5,
+};
+
+tim_config_t tim3_conf = {
+	.prescaler = 42000,
+	.reload = 60000,
+	.interrupt = TIM_INTERRUPT_ENABLE,
+	.interruptpriority = 6,
+};
+
+tim_config_t tim5_conf = {
+	.prescaler = 84,
+	.reload = 1000,
+	.dma = dma1_stream0,
+};
+
+
+return_t ret;
 void task_blink(void *param);
 void task_logmem(void *param);
 void task_exti(void *param);
+void task_pwm(void *param);
 
 void exti_eventhandler(uint16_t pin, void *param);
+void tim3_eventhandler(tim_event_t event, void *param);
+void Dma1_Stream0_eventhandler(void *Parameter, dma_event_t event);
+
+uint16_t tim5_ch3_pwm = 1;
 
 void app_main(void){
 	gpio_port_clock_enable(GPIOE);
@@ -34,7 +66,6 @@ void app_main(void){
 
 	exti_register_event_handler(exti_eventhandler, NULL);
 
-
 	gpio_port_clock_enable(GPIOC);
 	gpio_config_t pc13 = {
 		.port = GPIOC,
@@ -46,6 +77,22 @@ void app_main(void){
 	};
 	gpio_init(&pc13);
 
+	ret = tim3->init(&tim3_conf);
+	if(!is_oke(&ret)) STM_LOGE(TAG, "TIM3 initialize fail.");
+	tim3->register_event_handler(tim3_eventhandler, NULL);
+	ret = tim3->start_it();
+	if(!is_oke(&ret)) STM_LOGE(TAG, "TIM3 start fail.");
+
+
+	ret = dma1_stream0->init(&dma1_stream0_channel6_conf);
+	if(!is_oke(&ret)) STM_LOGE(TAG, "DMA1 Stream0 Channel6 initialize fail.");
+	dma1_stream0->register_event_handler(Dma1_Stream0_eventhandler, NULL);
+
+	ret = tim5->init(&tim5_conf);
+	if(!is_oke(&ret)) STM_LOGE(TAG, "TIM5 initialize fail.");
+	tim5->set_mode_pwm(TIM_CHANNEL3, TIM_PWM_NOINVERT, GPIOA, 2);
+	tim5->pwm_start_dma(TIM_CHANNEL3, &tim5_ch3_pwm, 1);
+
 	exti_queue = xQueueCreate(30, sizeof(char*));
 	if(exti_queue == NULL) STM_LOGE(TAG, "Queue create failed.");
 	else STM_LOGI(TAG, "Queue create oke.");
@@ -54,6 +101,7 @@ void app_main(void){
 	xTaskCreate(task_logmem, "task_logmem", byte_to_word(1024), NULL, 3, NULL);
 	xTaskCreate(task_blink, "task_blink", byte_to_word(1024), NULL, 2, NULL);
 	xTaskCreate(task_exti, "task_exti", byte_to_word(1024), NULL, 4, NULL);
+	xTaskCreate(task_pwm, "task_pwm", byte_to_word(1024), NULL, 2, NULL);
 
 }
 
@@ -92,6 +140,18 @@ void task_exti(void *param){
 	}
 }
 
+void task_pwm(void *param){
+
+	while(1){
+		tim5_ch3_pwm++;
+		if(tim5_ch3_pwm == 999) tim5_ch3_pwm = 0;
+//		STM_LOGI(TAG, "PWM Value = %d", tim2_ch3_pwm);
+//		tim2->pwm_set_duty(TIM_CHANNEL3, tim5_ch3_pwm);
+		vTaskDelay(5);
+	}
+
+}
+
 
 void exti_eventhandler(uint16_t pin, void *param){
 	uint16_t i = pin;
@@ -109,9 +169,15 @@ void exti_eventhandler(uint16_t pin, void *param){
 	}
 }
 
+void tim3_eventhandler(tim_event_t event, void *param){
+	if(event == TIM_UPDATE_EVENT){
+		STM_LOGI(TAG, "Timer 3 update event.");
+	}
+}
 
+void Dma1_Stream0_eventhandler(void *Parameter, dma_event_t event){
 
-
+}
 
 
 

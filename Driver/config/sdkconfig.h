@@ -49,7 +49,6 @@
 /**
  * Clock configuration.
  */
-
 #define HSE_VALUE 						25000000U // Hz
 #define HSI_VALUE 						16000000U // Hz
 #define HSI_TRIM_VALUE                  16U
