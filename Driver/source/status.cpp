@@ -230,8 +230,8 @@ bool is_ready(return_t *res){
  * @param res
  * @return
  */
-bool is_unavailable(return_t *res){
-	if(res -> Status == UNAVAILABLE) return true;
+bool is_notavailable(return_t *res){
+	if(res -> Status == NOTAVAILABLE) return true;
 	return false;
 }
 

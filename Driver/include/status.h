@@ -33,7 +33,7 @@ typedef enum{
 	UNSUPPORTED,
 	BUSY,
 	READY,
-	UNAVAILABLE,
+	NOTAVAILABLE,
 } status_t;
 
 

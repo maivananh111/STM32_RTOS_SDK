@@ -29,13 +29,13 @@ return_t exti_init(GPIO_TypeDef *Port, uint16_t Pin, exti_edgedetect_t Edge, uin
 	uint8_t CRPos = 0;
 	IRQn_Type IRQn;
 
-//#ifdef RTOS
-//	if(Priority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
-//		set_return(&ret, ERR, __LINE__);
-//		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
-//		return ret;
-//	}
-//#endif
+#ifdef RTOS
+	if(Priority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+#endif
 
 	if(Pin < 4U) 					CRPos = 0;
 	else if(Pin >= 4U && Pin < 8U)  CRPos = 1;

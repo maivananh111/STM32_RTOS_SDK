@@ -44,9 +44,12 @@ return_t TIM::init(tim_config_t *conf){
 	else   				   RCC -> APB1ENR |= RCC_APB1ENR_TIM14EN;
 
 	/* BASIC TIMER */
-	_tim -> CR1 |= (_conf -> direction << TIM_CR1_DIR_Pos) | (_conf -> autoreloadpreload << TIM_CR1_ARPE_Pos);
+	_tim -> CR1 = 0U;
+	_tim -> CR1 |= (_conf -> direction << TIM_CR1_DIR_Pos) | (_conf -> autoreloadpreload << TIM_CR1_ARPE_Pos) | (_conf -> align << TIM_CR1_CMS_Pos);
 
+	_tim -> ARR = 0U;
 	_tim -> ARR = _conf -> reload - 1;
+	_tim -> PSC = 0U;
 	_tim -> PSC = _conf -> prescaler - 1;
 
 	_tim -> EGR = TIM_EGR_UG;
@@ -71,64 +74,8 @@ return_t TIM::init(tim_config_t *conf){
 	return ret;
 }
 
-return_t TIM::set_mode_pwm(tim_channel_t channel, tim_pwmmode_t mode, GPIO_TypeDef *port, uint16_t pin){
-	return_t ret;
-
-	gpio_port_clock_enable(port);
-
-	gpio_alternatefunction_t func;
-	if(_tim == TIM1 || _tim == TIM2) 										func = AF1_TIM1_2;
-	else if(_tim == TIM3 || _tim == TIM4 || _tim == TIM5) 					func = AF2_TIM3_5;
-	else if(_tim == TIM8 || _tim == TIM9 || _tim == TIM10 || _tim == TIM11) func = AF3_TIM8_11;
-	else if(_tim == TIM12 || _tim == TIM13 || _tim == TIM14) 				func = AF9_CAN1_2_TIM12_14;
-	else {
-		set_return(&ret, UNSUPPORTED, __LINE__);
-		return ret;
-	}
-	gpio_set_alternatefunction(port, pin, func);
-
-	if(channel < TIM_CHANNEL3){ // Channel 1-2
-		_tim -> CCMR1 |=  (TIM_CCMR1_OC1PE << (channel*8)); // Set PE.
-		_tim -> CCMR1 &=~ (TIM_CCMR1_OC1FE << (channel*8)); // Clear FE.
-		_tim -> CCMR1 |=  ((mode << TIM_CCMR1_OC1M_Pos) << (channel*8)); // Set 6UL to OCxM.
-	}
-	else if(channel >= TIM_CHANNEL3 && channel < TIM_NOCHANNEL){ // Channel 3-4
-		_tim -> CCMR2 |=  (TIM_CCMR2_OC3PE << ((channel - 2)*8)); // Set PE.
-		_tim -> CCMR2 &=~ (TIM_CCMR2_OC3FE << ((channel - 2)*8)); // Clear FE.
-		_tim -> CCMR2 |=  ((mode << TIM_CCMR2_OC3M_Pos) << ((channel - 2)*8)); // Set PWM mode1 or mode2 (mode1 notinvert: 6, mode2 invert: 7) to OCxM.
-	}
-
-	_tim -> CCER |= (TIM_CCER_CC1E << (channel*4));
-
-	return ret;
-}
-
-return_t TIM::set_mode_encoder(GPIO_TypeDef *a_port, uint16_t a_pin, GPIO_TypeDef *b_port, uint16_t b_pin){
-	return_t ret;
-/*
-	if	   (_tim == TIM1)  IRQn = TIM1_CC_IRQn;
-	else if(_tim == TIM8)  IRQn = TIM8_CC_IRQn;
-
-		gpio_port_clock_enable(_conf -> enc1port);
-		gpio_port_clock_enable(_conf -> enc2port);
-
-		gpio_set_mode(_conf -> enc1port, _conf -> enc1pin, GPIO_INPUT_PULLUP);
-		gpio_set_mode(_conf -> enc2port, _conf -> enc2pin, GPIO_INPUT_PULLUP);
-
-		_tim -> ARR = 0xFFFE;
-		_tim -> PSC = 0;
-
-		_tim -> SMCR |= (3UL << TIM_SMCR_SMS_Pos);
-		_tim -> CCMR1 |= TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0;
-		_tim -> CCMR1 &=~ (TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC);
-		_tim -> CCMR1 &=~ (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F);
-
-		_tim -> CCER |= TIM_CCER_CC1P | TIM_CCER_CC2P;
-		_tim -> CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
-
-	}
-	*/
-	return ret;
+tim_config_t *TIM::get_config(void){
+	return _conf;
 }
 
 void TIM::set_prescaler (uint32_t psc){
@@ -162,12 +109,12 @@ void TIM::clear_update_isr(void){
 }
 
 
-return_t TIM::register_event_handler(void(*function_ptr)(tim_event_t event, void *param), void *param){
+return_t TIM::register_event_handler(void(*function_ptr)(tim_channel_t channel, tim_event_t event, void *param), void *param){
 	return_t ret;
 
 	if(_conf -> interrupt != TIM_INTERRUPT_ENABLE) {
-		set_return(&ret, UNSUPPORTED, __LINE__);
-		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disable, can't register timer event handler.", __FILE__, __FUNCTION__);
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disabled, can't register timer event handler.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 
@@ -182,6 +129,7 @@ return_t TIM::unregister_event_handler(void){
 
 	if(handler_callback == NULL){
 		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt wasn't register event handler, can't unregister.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 
@@ -211,7 +159,7 @@ return_t TIM::stop(void){
 		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop.", __FILE__, __FUNCTION__);
 		return ret;
 	}
-	_tim -> CR1 &=! TIM_CR1_CEN;
+	_tim -> CR1 &=~ TIM_CR1_CEN;
 
 	return ret;
 }
@@ -220,8 +168,8 @@ return_t TIM::start_it(void){
 	return_t ret;
 
 	if(_conf -> interrupt == TIM_INTERRUPT_DISABLE){
-		set_return(&ret, UNAVAILABLE, __LINE__);
-		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disable.", __FILE__, __FUNCTION__);
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disabled.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 
@@ -235,7 +183,7 @@ return_t TIM::start_it(void){
 
 	if(_tim -> CR1 & TIM_CR1_CEN){
 		set_return(&ret, BUSY, __LINE__);
-		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart in interrut mode.", __FILE__, __FUNCTION__);
+		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart in interrupt mode.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 
@@ -254,12 +202,14 @@ return_t TIM::stop_it(void){
 	return_t ret;
 
 	if(_conf -> interrupt == TIM_INTERRUPT_DISABLE){
-		set_return(&ret, UNAVAILABLE, __LINE__);
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disabled.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 
 	if(!(_tim -> CR1 & TIM_CR1_CEN)){
 		set_return(&ret, ERR, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop in interrupt mode.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 	_tim -> CR1 &=~ TIM_CR1_CEN;
@@ -273,14 +223,22 @@ return_t TIM::stop_it(void){
 	return ret;
 }
 
+#ifdef ENABLE_DMA
 return_t TIM::start_dma(uint32_t *count_buf, uint16_t size){
 	return_t ret;
 
+	if(_conf -> dma_upd == NULL){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma, can't start in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
 	_tim -> CR1  &=~ TIM_CR1_CEN;
 
-	ret = _conf -> dma -> start((uint32_t)count_buf, (uint32_t)&_tim -> CNT, size);
+	ret = _conf -> dma_upd -> start((uint32_t)count_buf, (uint32_t)&_tim -> CNT, size);
 	if(!is_oke(&ret)) {
 		set_return_line(&ret, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer dma start fail.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 
@@ -292,10 +250,17 @@ return_t TIM::start_dma(uint32_t *count_buf, uint16_t size){
 return_t TIM::stop_dma(void){
 	return_t ret;
 
-	if(_tim -> DIER & TIM_DIER_CC1DE){
-		ret = _conf -> dma -> stop();
+	if(_conf -> dma_upd == NULL){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma, can't stop in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	if((_tim -> DIER & TIM_DIER_CC1DE) && (_tim -> CR1 & TIM_CR1_CEN)){
+		ret = _conf -> dma_upd -> stop();
 		if(!is_oke(&ret)) {
 			set_return_line(&ret, __LINE__);
+			STM_LOGE(TAG, "%s -> %s, Timer dma stop fail.", __FILE__, __FUNCTION__);
 			return ret;
 		}
 
@@ -304,14 +269,254 @@ return_t TIM::stop_dma(void){
 	}
 	else{
 		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer dma not start.", __FILE__, __FUNCTION__);
+	}
+
+	return ret;
+}
+#endif
+
+/* TIMER PWM OUTPUT MODE */
+return_t TIM::set_mode_pwm_output(tim_channel_t channel, tim_pwm_t *conf){
+	return_t ret;
+
+	gpio_port_clock_enable(conf->port);
+
+	gpio_alternatefunction_t func;
+	if(_tim == TIM1 || _tim == TIM2) 										func = AF1_TIM1_2;
+	else if(_tim == TIM3 || _tim == TIM4 || _tim == TIM5) 					func = AF2_TIM3_5;
+	else if(_tim == TIM8 || _tim == TIM9 || _tim == TIM10 || _tim == TIM11) func = AF3_TIM8_11;
+	else if(_tim == TIM12 || _tim == TIM13 || _tim == TIM14) 				func = AF9_CAN1_2_TIM12_14;
+	else {
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		return ret;
+	}
+	gpio_set_alternatefunction(conf->port, conf->pin, func);
+	gpio_set_alternatefunction_type(conf->port, conf->pin, GPIO_OUTPUT_PUSHPULL);
+
+	if(channel < TIM_CHANNEL3){ // Channel 1-2
+		_tim -> CCMR1 &=~ (0xFF << (channel*8));
+		_tim -> CCMR1 &=~ (TIM_CCMR1_CC1S << (channel*8));
+		_tim -> CCMR1 |= ((conf->preload << TIM_CCMR1_OC1PE_Pos) << (channel*8));
+		_tim -> CCMR1 |= ((conf->fastmode << TIM_CCMR1_OC1FE_Pos) << (channel*8));
+		_tim -> CCMR1 |= ((conf->invert << TIM_CCMR1_OC1M_Pos) << (channel*8));
+	}
+	else if(channel >= TIM_CHANNEL3 && channel < TIM_NOCHANNEL){ // Channel 3-4
+		_tim -> CCMR2 &=~ (0xFF << ((channel-2)*8));
+		_tim -> CCMR2 &=~ (TIM_CCMR2_CC3S << ((channel-2)*8));
+		_tim -> CCMR2 |= ((conf->preload << TIM_CCMR2_OC3PE_Pos) << ((channel - 2)*8));
+		_tim -> CCMR2 |= ((conf->fastmode << TIM_CCMR2_OC3FE_Pos) << ((channel - 2)*8));
+		_tim -> CCMR2 |= ((conf->invert << TIM_CCMR2_OC3M_Pos) << ((channel - 2)*8));
 	}
 
 	return ret;
 }
 
+return_t TIM::pwm_output_start(tim_channel_t channel, uint32_t pwm){
+	return_t ret;
 
-/* TIMER PWM MODE */
-return_t TIM::pwm_set_duty(tim_channel_t channel, uint16_t pwm){
+	if(_tim -> CR1 & TIM_CR1_CEN){
+		set_return(&ret, BUSY, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart in interrupt mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	pwm_output_set_duty(channel, pwm);
+
+	_tim -> CCER |= (TIM_CCER_CC1E << (channel*4));
+	_tim -> CR1 |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::pwm_output_stop(tim_channel_t channel){
+	return_t ret;
+
+	if(!(_tim -> CR1 & TIM_CR1_CEN)){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
+	_tim -> CR1 &=~ TIM_CR1_CEN;
+
+	return ret;
+}
+
+
+return_t TIM::pwm_output_start_it(tim_channel_t channel, uint32_t pwm){
+	return_t ret;
+
+	if(_conf -> interrupt == TIM_INTERRUPT_DISABLE){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disabled.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+#ifdef RTOS
+	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+#endif
+
+	if(_tim -> CR1 & TIM_CR1_CEN){
+		set_return(&ret, BUSY, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart in interrupt mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	pwm_output_set_duty(channel, pwm);
+
+	_tim -> DIER |= (TIM_DIER_CC1IE << channel);
+	_tim -> CCER |= (TIM_CCER_CC1E << (channel*4));
+	__NVIC_ClearPendingIRQ(IRQn);
+	__NVIC_SetPriority(IRQn, _conf -> interruptpriority);
+	__NVIC_EnableIRQ(IRQn);
+	__NVIC_ClearPendingIRQ(IRQn);
+
+	_tim -> CR1 |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::pwm_output_stop_it(tim_channel_t channel){
+	return_t ret;
+	if(_conf -> interrupt == TIM_INTERRUPT_DISABLE){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disabled.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	if((_tim -> DIER & TIM_DIER_CC1IE << channel) && (_tim -> CR1 & TIM_CR1_CEN)){
+		_tim -> DIER &=~ (TIM_DIER_CC1IE << channel);
+		_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
+		_tim -> CR1 &=~ TIM_CR1_CEN;
+	}
+	else{
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop in interrupt mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	__NVIC_ClearPendingIRQ(IRQn);
+	__NVIC_DisableIRQ(IRQn);
+
+	return ret;
+}
+
+#ifdef ENABLE_DMA
+return_t TIM::pwm_output_start_dma(tim_channel_t channel, uint32_t *pwm_buffer, uint16_t size){
+	return_t ret;
+	dma_t dma = NULL;
+
+	switch(channel){
+		case TIM_CHANNEL1:
+			dma = _conf -> dma_ch1;
+		break;
+		case TIM_CHANNEL2:
+			dma = _conf -> dma_ch2;
+		break;
+		case TIM_CHANNEL3:
+			dma = _conf -> dma_ch3;
+		break;
+		case TIM_CHANNEL4:
+			dma = _conf -> dma_ch4;
+		break;
+		default:
+		break;
+	};
+
+	if(dma == NULL){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma, can't start in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
+	_tim -> DIER &=~ TIM_DIER_CC1DE << channel;
+	_tim -> CR1  &=~ TIM_CR1_CEN;
+
+	uint32_t CCRx_addr = 0x00U;
+	switch(channel){
+		case TIM_CHANNEL1:
+			CCRx_addr = (uint32_t)&_tim -> CCR1;
+		break;
+		case TIM_CHANNEL2:
+			CCRx_addr = (uint32_t)&_tim -> CCR2;
+		break;
+		case TIM_CHANNEL3:
+			CCRx_addr = (uint32_t)&_tim -> CCR3;
+		break;
+		case TIM_CHANNEL4:
+			CCRx_addr = (uint32_t)&_tim -> CCR4;
+		break;
+		default:
+		break;
+	};
+	ret = dma -> start((uint32_t)pwm_buffer, CCRx_addr, size);
+	if(!is_oke(&ret)) {
+		set_return_line(&ret, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer dma start fail.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+	_tim -> DIER |= TIM_DIER_CC1DE << channel;
+	_tim -> CCER |= (TIM_CCER_CC1E << (channel*4));
+	_tim -> CR1  |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::pwm_output_stop_dma(tim_channel_t channel){
+	return_t ret;
+	dma_t dma = NULL;
+
+	switch(channel){
+		case TIM_CHANNEL1:
+			dma = _conf -> dma_ch1;
+		break;
+		case TIM_CHANNEL2:
+			dma = _conf -> dma_ch2;
+		break;
+		case TIM_CHANNEL3:
+			dma = _conf -> dma_ch3;
+		break;
+		case TIM_CHANNEL4:
+			dma = _conf -> dma_ch4;
+		break;
+		default:
+		break;
+	};
+
+	if(dma == NULL){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma, can't stop in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	if((_tim -> DIER & TIM_DIER_CC1DE << channel) && (_tim -> CR1 & TIM_CR1_CEN)){
+		_tim -> DIER &=~ (TIM_DIER_CC1DE << channel);
+		ret = dma -> stop();
+		if(!is_oke(&ret)) {
+			set_return_line(&ret, __LINE__);
+			STM_LOGE(TAG, "%s -> %s, Timer dma stop fail.", __FILE__, __FUNCTION__);
+			return ret;
+		}
+		_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
+		_tim -> CR1  &=~ TIM_CR1_CEN;
+	}
+	else{
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer dma not started.", __FILE__, __FUNCTION__);
+	}
+
+	return ret;
+}
+#endif
+
+return_t TIM::pwm_output_set_duty(tim_channel_t channel, uint32_t pwm){
 	return_t ret;
 
 	switch(channel){
@@ -335,8 +540,539 @@ return_t TIM::pwm_set_duty(tim_channel_t channel, uint16_t pwm){
 }
 
 
-return_t TIM::pwm_start_dma(tim_channel_t channel, uint16_t *pwm, uint16_t size){
+/* TIMER PWM INPUT MODE */
+return_t TIM::set_mode_pwm_input(tim_channel_t channel, tim_pwm_t *conf){
 	return_t ret;
+
+	if(channel == TIM_CHANNEL3 || channel == TIM_CHANNEL4) {
+		set_return(&ret, UNSUPPORTED, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer PWM input unsupported on channel3 and channel 4.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+	if(conf -> polarity == TIM_BOTH_EDGE){
+		set_return(&ret, UNSUPPORTED, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer PWM input unsupported both edge.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	gpio_port_clock_enable(conf->port);
+
+	gpio_alternatefunction_t func;
+	if(_tim == TIM1 || _tim == TIM2) 										func = AF1_TIM1_2;
+	else if(_tim == TIM3 || _tim == TIM4 || _tim == TIM5) 					func = AF2_TIM3_5;
+	else if(_tim == TIM8 || _tim == TIM9 || _tim == TIM10 || _tim == TIM11) func = AF3_TIM8_11;
+	else if(_tim == TIM12 || _tim == TIM13 || _tim == TIM14) 				func = AF9_CAN1_2_TIM12_14;
+	else {
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		return ret;
+	}
+	gpio_set_alternatefunction(conf->port, conf->pin, func);
+	gpio_set_alternatefunction_type(conf->port, conf->pin, GPIO_OUTPUT_PUSHPULL);
+
+	_tim -> CCER &=~ (TIM_CCER_CC1E | TIM_CCER_CC2E);
+
+	_tim -> SMCR &=~ TIM_SMCR_TS_Msk;
+	_tim -> SMCR |= ((channel+5U) << TIM_SMCR_TS_Pos) | TIM_SMCR_SMS_2;
+
+	_tim -> CCMR1 &=~ (TIM_CCMR1_IC1F_Msk << (channel*8));
+	_tim -> CCMR1 |= (conf -> ch1_filter << TIM_CCMR1_IC1F_Pos);
+	_tim -> CCMR1 |= (conf -> ch2_filter << TIM_CCMR1_IC2F_Pos);
+
+	_tim -> CCER &=~ (TIM_CCER_CC1P | TIM_CCER_CC1NP | TIM_CCER_CC2P | TIM_CCER_CC2NP);
+	if(channel == TIM_CHANNEL1){
+		_tim -> CCER |= (conf -> polarity << TIM_CCER_CC1P_Pos);
+		_tim -> CCER |= (!(conf -> polarity) << TIM_CCER_CC2P_Pos);
+	}
+	else{
+		_tim -> CCER |= (!(conf -> polarity) << TIM_CCER_CC1P_Pos);
+		_tim -> CCER |= (conf -> polarity << TIM_CCER_CC2P_Pos);
+	}
+
+	_tim -> CCMR1 &=~ (TIM_CCMR1_CC1S_Msk << (channel*8U));
+	_tim -> CCMR1 |= TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_1;
+
+	return ret;
+}
+
+return_t TIM::pwm_input_start(tim_channel_t channel){
+	return inputcapture_start(channel);
+}
+
+return_t TIM::pwm_input_stop(tim_channel_t channel){
+	return inputcapture_stop(channel);
+}
+
+return_t TIM::pwm_input_start_it(tim_channel_t channel){
+	return inputcapture_start_it(channel);
+}
+
+return_t TIM::pwm_input_stop_it(tim_channel_t channel){
+	return inputcapture_stop_it(channel);
+}
+#ifdef ENABLE_DMA
+return_t TIM::pwm_input_start_dma(tim_channel_t channel, uint32_t *pwm_buffer, uint16_t size){
+	return inputcapture_start_dma(channel, pwm_buffer, size);
+}
+
+return_t TIM::pwm_input_stop_dma(tim_channel_t channel){
+	return inputcapture_stop_dma(channel);
+}
+#endif
+
+
+
+
+/* TIMER ENCODER MODE */
+return_t TIM::set_mode_encoder(tim_encoder_t *conf){
+	return_t ret;
+
+	gpio_alternatefunction_t func;
+	if(_tim == TIM1 || _tim == TIM2) 										func = AF1_TIM1_2;
+	else if(_tim == TIM3 || _tim == TIM4 || _tim == TIM5) 					func = AF2_TIM3_5;
+	else if(_tim == TIM8 || _tim == TIM9 || _tim == TIM10 || _tim == TIM11) func = AF3_TIM8_11;
+	else if(_tim == TIM12 || _tim == TIM13 || _tim == TIM14) 				func = AF9_CAN1_2_TIM12_14;
+	else {
+		set_return(&ret, UNSUPPORTED, __LINE__);
+		return ret;
+	}
+
+	if	   (_tim == TIM1)  IRQn = TIM1_CC_IRQn;
+	else if(_tim == TIM8)  IRQn = TIM8_CC_IRQn;
+
+	gpio_port_clock_enable(conf -> encA_ch1_port);
+	gpio_port_clock_enable(conf -> encB_ch2_port);
+
+	gpio_set_alternatefunction(conf -> encA_ch1_port, conf -> encA_ch1_pin, func);
+	gpio_set_alternatefunction(conf -> encB_ch2_port, conf -> encB_ch2_pin, func);
+
+	gpio_set_alternatefunction_type(conf -> encA_ch1_port, conf -> encA_ch1_pin, GPIO_OUTPUT_PUSHPULL);
+	gpio_set_alternatefunction_type(conf -> encB_ch2_port, conf -> encB_ch2_pin, GPIO_OUTPUT_PUSHPULL);
+
+	_tim -> SMCR &=~ TIM_SMCR_SMS;
+	_tim -> SMCR |= (conf -> mode << TIM_SMCR_SMS_Pos);
+
+	_tim -> CCMR1 = 0U;
+	_tim -> CCMR1 |= TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0;
+	_tim -> CCMR1 |= ((conf -> encA_ch1_prescaler << TIM_CCMR1_IC1PSC_Pos) | (conf -> encB_ch2_prescaler << TIM_CCMR1_IC2PSC_Pos));
+	_tim -> CCMR1 |= ((conf -> encA_ch1_filter << TIM_CCMR1_IC1F_Pos) | (conf -> encB_ch2_filter << TIM_CCMR1_IC2F_Pos));
+
+	_tim -> CCER &=~ (TIM_CCER_CC1P | TIM_CCER_CC1NP | TIM_CCER_CC2P | TIM_CCER_CC2NP);
+	_tim -> CCER |= ((conf -> encA_ch1_edge << TIM_CCER_CC1P_Pos) | (conf -> encB_ch2_edge << TIM_CCER_CC2P_Pos));
+
+	return ret;
+}
+
+return_t TIM::encoder_start(void){
+	return_t ret;
+
+	if(_tim -> CR1 & TIM_CR1_CEN){
+		set_return(&ret, BUSY, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	tim_encoder_mode_t mode = (tim_encoder_mode_t)((_tim -> SMCR & TIM_SMCR_SMS_Msk) >> TIM_SMCR_SMS_Pos);
+	if(mode == TIM_ENCODER_MODE1){
+		_tim -> CCER |= TIM_CCER_CC1E;
+	}
+	else if(mode == TIM_ENCODER_MODE2){
+		_tim -> CCER |= TIM_CCER_CC2E;
+	}
+	else{
+		_tim -> CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
+	}
+
+	_tim -> CR1 |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::encoder_stop(void){
+	return_t ret;
+
+	if(!(_tim -> CR1 & TIM_CR1_CEN)){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	tim_encoder_mode_t mode = (tim_encoder_mode_t)((_tim -> SMCR & TIM_SMCR_SMS_Msk) >> TIM_SMCR_SMS_Pos);
+	if(mode == TIM_ENCODER_MODE1){
+		_tim -> CCER &=~ TIM_CCER_CC1E;
+	}
+	else if(mode == TIM_ENCODER_MODE2){
+		_tim -> CCER &=~ TIM_CCER_CC2E;
+	}
+	else{
+		_tim -> CCER &=~ (TIM_CCER_CC1E | TIM_CCER_CC2E);
+	}
+
+	_tim -> CR1 &=~ TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::encoder_start_it(void){
+	return_t ret;
+
+	if(_conf -> interrupt == TIM_INTERRUPT_DISABLE){
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disabled.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+#ifdef RTOS
+	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+#endif
+
+	if(_tim -> CR1 & TIM_CR1_CEN){
+		set_return(&ret, BUSY, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart in interrupt mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	tim_encoder_mode_t mode = (tim_encoder_mode_t)((_tim -> SMCR & TIM_SMCR_SMS_Msk) >> TIM_SMCR_SMS_Pos);
+	if(mode == TIM_ENCODER_MODE1){
+		_tim -> CCER |= TIM_CCER_CC1E;
+		_tim -> DIER |= TIM_DIER_CC1IE;
+	}
+	else if(mode == TIM_ENCODER_MODE2){
+		_tim -> CCER |= TIM_CCER_CC2E;
+		_tim -> DIER |= TIM_DIER_CC2IE;
+	}
+	else{
+		_tim -> CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
+		_tim -> DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
+	}
+
+	__NVIC_ClearPendingIRQ(IRQn);
+	__NVIC_SetPriority(IRQn, _conf -> interruptpriority);
+	__NVIC_EnableIRQ(IRQn);
+	__NVIC_ClearPendingIRQ(IRQn);
+
+	_tim -> CR1 |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::encoder_stop_it(void){
+	return_t ret;
+
+	if(_conf -> interrupt == TIM_INTERRUPT_DISABLE){
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		STM_LOGE(TAG, "%s -> %s -> Timer interrupt disabled.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	if(!(_tim -> CR1 & TIM_CR1_CEN)){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+	_tim -> CR1 &=~ TIM_CR1_CEN;
+	_tim -> DIER &=~ TIM_DIER_UIE;
+	__NVIC_ClearPendingIRQ(IRQn);
+	__NVIC_DisableIRQ(IRQn);
+
+	return ret;
+}
+
+#ifdef ENABLE_DMA
+return_t TIM::encoder_start_dma(uint32_t *encA_buffer, uint32_t *encB_buffer, uint16_t size){
+	return_t ret;
+
+	if((_conf -> dma_ch1 == NULL && _conf -> dma_ch2 == NULL) || (encA_buffer == NULL && encB_buffer == NULL)){
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma or data buffer, can't start in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	_tim -> CR1  &=~ TIM_CR1_CEN;
+
+	uint32_t CCRx_addr = 0x00U;
+	tim_encoder_mode_t mode = (tim_encoder_mode_t)((_tim -> SMCR & TIM_SMCR_SMS_Msk) >> TIM_SMCR_SMS_Pos);
+	switch(mode){
+		case TIM_ENCODER_MODE1:
+			_tim -> DIER &=~ TIM_DIER_CC1DE;
+			_tim -> CCER &=~ TIM_CCER_CC1E;
+
+			CCRx_addr = (uint32_t)&_tim -> CCR1;
+			ret = _conf -> dma_ch1 -> start(CCRx_addr, (uint32_t)encA_buffer, size);
+			if(!is_oke(&ret)) {
+				set_return_line(&ret, __LINE__);
+				STM_LOGE(TAG, "%s -> %s, Timer dma start fail.", __FILE__, __FUNCTION__);
+				return ret;
+			}
+
+			_tim -> DIER |= TIM_DIER_CC1DE;
+			_tim -> CCER |= TIM_CCER_CC1E;
+		break;
+
+		case TIM_ENCODER_MODE2:
+			_tim -> DIER &=~ TIM_DIER_CC2DE;
+			_tim -> CCER &=~ TIM_CCER_CC2E;
+
+			CCRx_addr = (uint32_t)&_tim -> CCR2;
+			ret = _conf -> dma_ch2 -> start(CCRx_addr, (uint32_t)encB_buffer, size);
+			if(!is_oke(&ret)) {
+				set_return_line(&ret, __LINE__);
+				STM_LOGE(TAG, "%s -> %s, Timer dma start fail.", __FILE__, __FUNCTION__);
+				return ret;
+			}
+
+			_tim -> DIER |= TIM_DIER_CC2DE;
+			_tim -> CCER |= TIM_CCER_CC2E;
+		break;
+
+		case TIM_ENCODER_MODE3:
+			_tim -> DIER &=~ (TIM_DIER_CC1DE | TIM_DIER_CC2DE);
+			_tim -> CCER &=~ (TIM_CCER_CC1E | TIM_CCER_CC2E);
+
+			CCRx_addr = (uint32_t)&_tim -> CCR1;
+			ret = _conf -> dma_ch1 -> start(CCRx_addr, (uint32_t)encA_buffer, size);
+			if(!is_oke(&ret)) {
+				set_return_line(&ret, __LINE__);
+				STM_LOGE(TAG, "%s -> %s, Timer dma start fail.", __FILE__, __FUNCTION__);
+				return ret;
+			}
+
+			CCRx_addr = (uint32_t)&_tim -> CCR2;
+			ret = _conf -> dma_ch2 -> start(CCRx_addr, (uint32_t)encB_buffer, size);
+			if(!is_oke(&ret)) {
+				set_return_line(&ret, __LINE__);
+				STM_LOGE(TAG, "%s -> %s, Timer dma start fail.", __FILE__, __FUNCTION__);
+				return ret;
+			}
+
+			_tim -> DIER |= (TIM_DIER_CC1DE | TIM_DIER_CC2DE);
+			_tim -> CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E);
+		break;
+
+		default:
+		break;
+	};
+	_tim -> CR1  |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::encoder_stop_dma(void){
+	return_t ret;
+
+	if((_conf -> dma_ch1 == NULL && _conf -> dma_ch2 == NULL)){
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma or data buffer, can't stop in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	if(((_tim -> DIER & TIM_DIER_CC1DE) || (_tim -> DIER & TIM_DIER_CC2DE)) && (_tim -> CR1 & TIM_CR1_CEN)){
+		tim_encoder_mode_t mode = (tim_encoder_mode_t)((_tim -> SMCR & TIM_SMCR_SMS_Msk) >> TIM_SMCR_SMS_Pos);
+		switch(mode){
+			case TIM_ENCODER_MODE1:
+				_tim -> DIER &=~ TIM_DIER_CC1DE;
+				ret = _conf -> dma_ch1 -> stop();
+				if(!is_oke(&ret)) {
+					set_return_line(&ret, __LINE__);
+					STM_LOGE(TAG, "%s -> %s, Timer dma stop fail.", __FILE__, __FUNCTION__);
+					return ret;
+				}
+				_tim -> CCER &=~ TIM_CCER_CC1E;
+			break;
+
+			case TIM_ENCODER_MODE2:
+				_tim -> DIER &=~ TIM_DIER_CC2DE;
+				ret = _conf -> dma_ch2 -> stop();
+				if(!is_oke(&ret)) {
+					set_return_line(&ret, __LINE__);
+					STM_LOGE(TAG, "%s -> %s, Timer dma stop fail.", __FILE__, __FUNCTION__);
+					return ret;
+				}
+				_tim -> CCER &=~ TIM_CCER_CC2E;
+			break;
+
+			case TIM_ENCODER_MODE3:
+				_tim -> DIER &=~ (TIM_DIER_CC1DE | TIM_DIER_CC2DE);
+				ret = _conf -> dma_ch1 -> stop();
+				if(!is_oke(&ret)) {
+					set_return_line(&ret, __LINE__);
+					STM_LOGE(TAG, "%s -> %s, Timer dma stop fail.", __FILE__, __FUNCTION__);
+					return ret;
+				}
+				ret = _conf -> dma_ch2 -> stop();
+				if(!is_oke(&ret)) {
+					set_return_line(&ret, __LINE__);
+					STM_LOGE(TAG, "%s -> %s, Timer dma stop fail.", __FILE__, __FUNCTION__);
+					return ret;
+				}
+				_tim -> CCER &=~ (TIM_CCER_CC1E | TIM_CCER_CC2E);
+			break;
+
+			default:
+			break;
+		};
+		_tim -> CR1  &=~ TIM_CR1_CEN;
+	}
+	else{
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer dma not started.", __FILE__, __FUNCTION__);
+	}
+
+	return ret;
+}
+#endif
+
+int16_t TIM::encoder_get_counter(void){
+	return (int16_t)((int16_t)counter/4);
+}
+
+uint32_t TIM::encoder_get_base_counter(void){
+	return counter;
+}
+
+
+/* TIMER INPUT CAPTURE MODE */
+return_t TIM::set_mode_inputcapture(tim_channel_t channel, tim_inputcapture_t *conf){
+	return_t ret;
+
+	gpio_alternatefunction_t func;
+	if(_tim == TIM1 || _tim == TIM2) 										func = AF1_TIM1_2;
+	else if(_tim == TIM3 || _tim == TIM4 || _tim == TIM5) 					func = AF2_TIM3_5;
+	else if(_tim == TIM8 || _tim == TIM9 || _tim == TIM10 || _tim == TIM11) func = AF3_TIM8_11;
+	else if(_tim == TIM12 || _tim == TIM13 || _tim == TIM14) 				func = AF9_CAN1_2_TIM12_14;
+	else {
+		set_return(&ret, UNSUPPORTED, __LINE__);
+		return ret;
+	}
+
+	if	   (_tim == TIM1)  IRQn = TIM1_CC_IRQn;
+	else if(_tim == TIM8)  IRQn = TIM8_CC_IRQn;
+
+	gpio_port_clock_enable(conf -> port);
+	gpio_set_alternatefunction(conf -> port, conf -> pin, func);
+	gpio_set_alternatefunction_type(conf -> port, conf -> pin, GPIO_OUTPUT_PUSHPULL);
+
+	_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4U));
+	if(channel < TIM_CHANNEL3){
+		_tim -> CCMR1 &=~ (0xFF << (channel));
+		_tim -> CCMR1 |= (TIM_CCMR1_CC1S_0 << (channel*8U));
+
+		_tim -> CCMR1 |= ((conf -> filter << TIM_CCMR1_IC1F_Pos) << (channel*8U));
+
+		_tim -> CCMR1 |= (conf -> prescaler << (channel*8U));
+	}
+	else if(channel >= TIM_CHANNEL3 && channel < TIM_NOCHANNEL){
+		_tim -> CCMR2 &=~ (0xFF << ((channel-2)));
+		_tim -> CCMR2 |= (TIM_CCMR2_CC3S_0 << ((channel-2)*8U));
+
+		_tim -> CCMR2 |= ((conf -> filter << TIM_CCMR2_IC3F_Pos) << ((channel-2)*8U));
+
+		_tim -> CCMR2 |=(conf -> prescaler << (channel*8U));
+	}
+	_tim -> CCER &=~ ((TIM_CCER_CC1P | TIM_CCER_CC1NP) << (channel*4));
+	_tim -> CCER |= ((conf -> polarity << TIM_CCER_CC1P_Pos) << (channel*4));
+
+	return ret;
+}
+
+return_t TIM::inputcapture_start(tim_channel_t channel){
+	return_t ret;
+
+	if(_tim -> CR1 & TIM_CR1_CEN){
+		set_return(&ret, BUSY, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+	_tim -> CCER |= (TIM_CCER_CC1E << (channel*4));
+	_tim -> CR1 |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::inputcapture_stop(tim_channel_t channel){
+	return_t ret;
+
+	if(!(_tim -> CR1 & TIM_CR1_CEN)){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+	_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
+	_tim -> CR1 &=~ TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::inputcapture_start_it(tim_channel_t channel){
+	return_t ret;
+
+	if(_tim -> CR1 & TIM_CR1_CEN){
+		set_return(&ret, BUSY, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer started, can't restart.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+	_tim -> DIER |= (TIM_DIER_CC1IE << channel);
+	_tim -> CCER |= (TIM_CCER_CC1E << (channel*4));
+
+	__NVIC_ClearPendingIRQ(IRQn);
+	__NVIC_SetPriority(IRQn, _conf -> interruptpriority);
+	__NVIC_EnableIRQ(IRQn);
+	__NVIC_ClearPendingIRQ(IRQn);
+
+	_tim -> CR1 |= TIM_CR1_CEN;
+
+	return ret;
+}
+
+return_t TIM::inputcapture_stop_it(tim_channel_t channel){
+	return_t ret;
+
+	if(!(_tim -> CR1 & TIM_CR1_CEN)){
+		set_return(&ret, ERR, __LINE__);
+		STM_LOGW(TAG, "%s -> %s, Timer not started, can't stop.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+	_tim -> DIER &=~ (TIM_DIER_CC1IE << channel);
+	_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
+
+	__NVIC_ClearPendingIRQ(IRQn);
+	__NVIC_DisableIRQ(IRQn);
+
+	_tim -> CR1 &=~ TIM_CR1_CEN;
+
+	return ret;
+}
+
+#ifdef ENABLE_DMA
+return_t TIM::inputcapture_start_dma(tim_channel_t channel, uint32_t *capture_buffer, uint16_t size){
+	return_t ret;
+	dma_t dma = NULL;
+
+	switch(channel){
+		case TIM_CHANNEL1:
+			dma = _conf -> dma_ch1;
+		break;
+		case TIM_CHANNEL2:
+			dma = _conf -> dma_ch2;
+		break;
+		case TIM_CHANNEL3:
+			dma = _conf -> dma_ch3;
+		break;
+		case TIM_CHANNEL4:
+			dma = _conf -> dma_ch4;
+		break;
+		default:
+		break;
+	};
+
+	if(dma == NULL){
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma, can't start in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
 
 	_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
 	_tim -> DIER &=~ TIM_DIER_CC1DE << channel;
@@ -359,27 +1095,52 @@ return_t TIM::pwm_start_dma(tim_channel_t channel, uint16_t *pwm, uint16_t size)
 		default:
 		break;
 	};
-	ret = _conf -> dma -> start((uint32_t)pwm, CCRx_addr, size);
+	ret = dma -> start(CCRx_addr, (uint32_t)capture_buffer, size);
 	if(!is_oke(&ret)) {
 		set_return_line(&ret, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer dma start fail.", __FILE__, __FUNCTION__);
 		return ret;
 	}
 	_tim -> DIER |= TIM_DIER_CC1DE << channel;
-
 	_tim -> CCER |= (TIM_CCER_CC1E << (channel*4));
 	_tim -> CR1  |= TIM_CR1_CEN;
 
 	return ret;
 }
 
-return_t TIM::pwm_stop_dma(tim_channel_t channel){
+return_t TIM::inputcapture_stop_dma(tim_channel_t channel){
 	return_t ret;
+	dma_t dma = NULL;
 
-	if(_tim -> DIER & TIM_DIER_CC1DE <<channel){
-		_tim -> DIER &=~ TIM_DIER_CC1DE << channel;
-		ret = _conf -> dma -> stop();
+	switch(channel){
+		case TIM_CHANNEL1:
+			dma = _conf -> dma_ch1;
+		break;
+		case TIM_CHANNEL2:
+			dma = _conf -> dma_ch2;
+		break;
+		case TIM_CHANNEL3:
+			dma = _conf -> dma_ch3;
+		break;
+		case TIM_CHANNEL4:
+			dma = _conf -> dma_ch4;
+		break;
+		default:
+		break;
+	};
+
+	if(dma == NULL){
+		set_return(&ret, NOTAVAILABLE, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer not set dma, can't stop in dma mode.", __FILE__, __FUNCTION__);
+		return ret;
+	}
+
+	if((_tim -> DIER & TIM_DIER_CC1DE << channel) && (_tim -> CR1 & TIM_CR1_CEN)){
+		_tim -> DIER &=~ (TIM_DIER_CC1DE << channel);
+		ret = dma -> stop();
 		if(!is_oke(&ret)) {
 			set_return_line(&ret, __LINE__);
+			STM_LOGE(TAG, "%s -> %s, Timer dma stop fail.", __FILE__, __FUNCTION__);
 			return ret;
 		}
 		_tim -> CCER &=~ (TIM_CCER_CC1E << (channel*4));
@@ -387,59 +1148,141 @@ return_t TIM::pwm_stop_dma(tim_channel_t channel){
 	}
 	else{
 		set_return(&ret, ERR, __LINE__);
+		STM_LOGE(TAG, "%s -> %s, Timer dma not started.", __FILE__, __FUNCTION__);
 	}
 
 	return ret;
 }
+#endif
 
-/* TIMER ENCODER MODE */
-/*
-void TIM::Encoder_ISR(void){
-	if(_tim -> SR & TIM_SR_CC1IF){
-		_tim -> SR =~ TIM_SR_CC1IF;
-		counter = _tim -> CNT;
-	}
-	if(_tim -> SR & TIM_SR_CC2IF){
-		_tim -> SR =~ TIM_SR_CC2IF;
-		counter = _tim -> CNT;
-	}
+uint32_t TIM::get_capture_counter(tim_channel_t channel){
+	switch(channel){
+		case TIM_CHANNEL1:
+			return _tim -> CCR1;
+
+		case TIM_CHANNEL2:
+			return _tim -> CCR2;
+
+		case TIM_CHANNEL3:
+			return _tim -> CCR3;
+
+		case TIM_CHANNEL4:
+			return _tim -> CCR4;
+		default:
+			return 0U;
+	};
+	return 0U;
 }
 
-int16_t TIM::Encoder_GetValue(void){
-	return (int16_t)((int16_t)counter/4);
+/* TIMER OuTPUT COMPARE MODE*/
+return_t TIM::set_mode_outputcompare(tim_channel_t channel, tim_outputcompare_t *conf){
+	return_t ret;
+
+	if(conf -> port != NULL){
+		gpio_alternatefunction_t func;
+		if(_tim == TIM1 || _tim == TIM2) 										func = AF1_TIM1_2;
+		else if(_tim == TIM3 || _tim == TIM4 || _tim == TIM5) 					func = AF2_TIM3_5;
+		else if(_tim == TIM8 || _tim == TIM9 || _tim == TIM10 || _tim == TIM11) func = AF3_TIM8_11;
+		else if(_tim == TIM12 || _tim == TIM13 || _tim == TIM14) 				func = AF9_CAN1_2_TIM12_14;
+		else {
+			set_return(&ret, UNSUPPORTED, __LINE__);
+			return ret;
+		}
+
+		gpio_port_clock_enable(conf -> port);
+		gpio_set_alternatefunction(conf -> port, conf -> pin, func);
+		gpio_set_alternatefunction_type(conf -> port, conf -> pin, GPIO_OUTPUT_PUSHPULL);
+	}
+
+	if	   (_tim == TIM1)  IRQn = TIM1_CC_IRQn;
+	else if(_tim == TIM8)  IRQn = TIM8_CC_IRQn;
+
+	_tim -> CCER &=~ TIM_CCER_CC1E;
+
+	if(channel < TIM_CHANNEL3){
+		_tim -> CCMR1 &=~ (0xFF << (channel*8));
+		_tim -> CCMR1 |= ((conf -> mode << TIM_CCMR1_OC1M_Pos) << (channel*8));
+	}
+	else if (channel > TIM_CHANNEL2 && channel < TIM_NOCHANNEL){
+		_tim -> CCMR2 &=~ (0xFF << ((channel-2)*8));
+		_tim -> CCMR2 |= ((conf -> mode << TIM_CCMR2_OC3M_Pos) << ((channel-2)*8));
+	}
+	_tim -> CCER &=~ (0x0F << (channel*4));
+	_tim -> CCER |= ((conf -> level_polarity << TIM_CCER_CC1P_Pos) << (channel*4));
+
+	return ret;
 }
-*/
+
+return_t TIM::outputcompare_start(tim_channel_t channel, uint32_t value){
+	return pwm_output_start(channel, value);
+}
+
+return_t TIM::outputcompare_stop(tim_channel_t channel){
+	return pwm_output_stop(channel);
+}
+
+return_t TIM::outputcompare_start_it(tim_channel_t channel, uint32_t value){
+	return pwm_output_start_it(channel, value);
+}
+
+return_t TIM::outputcompare_stop_it(tim_channel_t channel){
+	return pwm_output_stop_it(channel);
+}
+
+#ifdef ENABLE_DMA
+return_t TIM::outputcompare_start_dma(tim_channel_t channel, uint32_t *oc_buffer, uint16_t size){
+	return pwm_output_start_dma(channel, oc_buffer, size);
+}
+
+return_t TIM::outputcompare_stop_dma(tim_channel_t channel){
+	return pwm_output_stop_dma(channel);
+}
+#endif
+
+
+return_t TIM::set_pulse(tim_channel_t channel, uint32_t pulse){
+	return_t ret;
+
+
+	return ret;
+}
+
 
 void TIM_IRQHandler(tim_t timptr){
 	tim_event_t event = TIM_NO_EVENT;
+	tim_channel_t channel = TIM_NOCHANNEL;
 
 	timptr -> counter = timptr -> _tim -> CNT;
 
 	/* TIMER CAPTURE-COMPARE 1 INTERRUPT */
-	if(timptr -> _tim -> SR & TIM_SR_CC1IF && timptr -> _tim -> DIER & TIM_DIER_CC1DE){
+	if(timptr -> _tim -> SR & TIM_SR_CC1IF && timptr -> _tim -> DIER & TIM_DIER_CC1IE){
 		timptr -> _tim -> SR =~ TIM_SR_CC1IF;
 		event = TIM_CAPTURECOMPARE1_EVENT;
+		channel = TIM_CHANNEL1;
 		goto EventCB;
 	}
 
 	/* TIMER CAPTURE-COMPARE 2 INTERRUPT */
-	if(timptr -> _tim -> SR & TIM_SR_CC2IF && timptr -> _tim -> DIER & TIM_DIER_CC2DE){
+	if(timptr -> _tim -> SR & TIM_SR_CC2IF && timptr -> _tim -> DIER & TIM_DIER_CC2IE){
 		timptr -> _tim -> SR =~ TIM_SR_CC2IF;
 		event = TIM_CAPTURECOMPARE2_EVENT;
+		channel = TIM_CHANNEL2;
 		goto EventCB;
 	}
 
 	/* TIMER CAPTURE-COMPARE 3 INTERRUPT */
-	if(timptr -> _tim -> SR & TIM_SR_CC3IF && timptr -> _tim -> DIER & TIM_DIER_CC3DE){
+	if(timptr -> _tim -> SR & TIM_SR_CC3IF && timptr -> _tim -> DIER & TIM_DIER_CC3IE){
 		timptr -> _tim -> SR =~ TIM_SR_CC3IF;
 		event = TIM_CAPTURECOMPARE3_EVENT;
+		channel = TIM_CHANNEL3;
 		goto EventCB;
 	}
 
 	/* TIMER CAPTURE-COMPARE 4 INTERRUPT */
-	if(timptr -> _tim -> SR & TIM_SR_CC4IF && timptr -> _tim -> DIER & TIM_DIER_CC4DE){
+	if(timptr -> _tim -> SR & TIM_SR_CC4IF && timptr -> _tim -> DIER & TIM_DIER_CC4IE){
 		timptr -> _tim -> SR =~ TIM_SR_CC4IF;
 		event = TIM_CAPTURECOMPARE4_EVENT;
+		channel = TIM_CHANNEL4;
 		goto EventCB;
 	}
 
@@ -465,7 +1308,7 @@ void TIM_IRQHandler(tim_t timptr){
 	}
 
 	EventCB:
-	timptr -> handler_callback(event, timptr -> parameter);
+	if(timptr -> handler_callback != NULL) timptr -> handler_callback(channel, event, timptr -> parameter);
 }
 
 #ifdef ENABLE_TIM1

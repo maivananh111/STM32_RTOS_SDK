@@ -14,7 +14,6 @@
 
 
 static const char *TAG = "MAIN";
-char *aloc_buf = NULL;
 
 QueueHandle_t exti_queue = NULL;
 
@@ -39,21 +38,29 @@ tim_config_t tim3_conf = {
 tim_config_t tim5_conf = {
 	.prescaler = 84,
 	.reload = 1000,
-	.dma = dma1_stream0,
+	.dma_ch3 = dma1_stream0,
 };
-
+tim_pwm_t tim5_ch3_conf = {
+	.port = GPIOA,
+	.pin = 2,
+	.invert = TIM_PWM_NOINVERT,
+	.preload = TIM_PRELOAD_ENABLE,
+	.fastmode = TIM_FASTMODE_ENABLE,
+};
+uint32_t *aloc_buf;
 
 return_t ret;
+
 void task_blink(void *param);
 void task_logmem(void *param);
 void task_exti(void *param);
 void task_pwm(void *param);
 
 void exti_eventhandler(uint16_t pin, void *param);
-void tim3_eventhandler(tim_event_t event, void *param);
+void tim3_eventhandler(tim_channel_t channel, tim_event_t event, void *param);
 void Dma1_Stream0_eventhandler(void *Parameter, dma_event_t event);
 
-uint16_t tim5_ch3_pwm = 1;
+uint32_t tim5_ch3_pwm = 1;
 
 void app_main(void){
 	gpio_port_clock_enable(GPIOE);
@@ -90,8 +97,8 @@ void app_main(void){
 
 	ret = tim5->init(&tim5_conf);
 	if(!is_oke(&ret)) STM_LOGE(TAG, "TIM5 initialize fail.");
-	tim5->set_mode_pwm(TIM_CHANNEL3, TIM_PWM_NOINVERT, GPIOA, 2);
-	tim5->pwm_start_dma(TIM_CHANNEL3, &tim5_ch3_pwm, 1);
+	tim5->set_mode_pwm_output(TIM_CHANNEL3, &tim5_ch3_conf);
+	tim5->pwm_output_start_dma(TIM_CHANNEL3, &tim5_ch3_pwm, 1);
 
 	exti_queue = xQueueCreate(30, sizeof(char*));
 	if(exti_queue == NULL) STM_LOGE(TAG, "Queue create failed.");
@@ -120,9 +127,11 @@ void task_blink(void *param){
 void task_logmem(void *param){
 
 	while(1){
-		aloc_buf = (char *)malloc(10);
+		aloc_buf = (uint32_t *)malloc(1000*sizeof(uint32_t));
+		if(aloc_buf)
 		STM_LOGM(TAG, "Free heap size: %lu", get_free_heap_size());
 		vTaskDelay(1000);
+		free(aloc_buf);
 	}
 }
 
@@ -147,7 +156,7 @@ void task_pwm(void *param){
 		if(tim5_ch3_pwm == 999) tim5_ch3_pwm = 0;
 //		STM_LOGI(TAG, "PWM Value = %d", tim2_ch3_pwm);
 //		tim2->pwm_set_duty(TIM_CHANNEL3, tim5_ch3_pwm);
-		vTaskDelay(5);
+		vTaskDelay(2);
 	}
 
 }
@@ -169,7 +178,7 @@ void exti_eventhandler(uint16_t pin, void *param){
 	}
 }
 
-void tim3_eventhandler(tim_event_t event, void *param){
+void tim3_eventhandler(tim_channel_t channel, tim_event_t event, void *param){
 	if(event == TIM_UPDATE_EVENT){
 		STM_LOGI(TAG, "Timer 3 update event.");
 	}

@@ -16,6 +16,7 @@
 #define ENABLE_DMA
 #define ENABLE_USART
 #define ENABLE_I2C
+#define ENABLE_USB
 
 /**
  *  EXTI ENABLE

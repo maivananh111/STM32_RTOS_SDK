@@ -27,7 +27,7 @@
  */
 #if RTOS
 #define TOTAL_HEAP_SIZE                 (128U * 1024U)
-#define RTOS_HEAP_SIZE                  (64U * 1024U)
+#define RTOS_HEAP_SIZE                  (20 * 1024U)
 
 #define RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY   4 // Your system interrupt priority must be greater than this number.
 #define MAX_PRIORITY                    32
