@@ -37,7 +37,7 @@ typedef enum{
 } status_t;
 
 
-typedef struct{
+typedef struct return_t{
 	status_t Status = OKE;
 	uint32_t Line = 0U;
 } return_t;

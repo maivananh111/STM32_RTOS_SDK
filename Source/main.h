@@ -8,6 +8,10 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #include "sdkconfig.h"
 #include "stm32f4xx.h"
 
@@ -22,9 +26,6 @@
 
 #include "stm_log.h"
 
-#ifdef __cplusplus
-extern "C"{
-#endif
 
 void app_main(void);
 

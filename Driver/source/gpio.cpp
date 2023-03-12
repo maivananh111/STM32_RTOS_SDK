@@ -19,9 +19,36 @@
  * @post
  */
 void gpio_allport_clock_enable(void){
-	/* ENABLE GPIO CLOCK */
-	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN
-					| RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN | RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_GPIOHEN | RCC_AHB1ENR_GPIOIEN;
+#if defined(GPIOA)
+	GPIOA_CLOCKENABLE();
+#endif /* defined(GPIOA */
+#if defined(GPIOB)
+	GPIOB_CLOCKENABLE();
+#endif /* defined(GPIOB */
+#if defined(GPIOC)
+	GPIOC_CLOCKENABLE();
+#endif /* defined(GPIOC */
+#if defined(GPIOD)
+	GPIOD_CLOCKENABLE();
+#endif /* defined(GPIOD */
+#if defined(GPIOE)
+	GPIOE_CLOCKENABLE();
+#endif /* defined(GPIOE */
+#if defined(GPIOF)
+	GPIOF_CLOCKENABLE();
+#endif /* defined(GPIOF */
+#if defined(GPIOG)
+	GPIOG_CLOCKENABLE();
+#endif /* defined(GPIOG */
+#if defined(GPIOH)
+	GPIOH_CLOCKENABLE();
+#endif /* defined(GPIOH */
+#if defined(GPIOI)
+	GPIOI_CLOCKENABLE();
+#endif /* defined(GPIOI */
+#if defined(GPIOJ)
+	GPIOJ_CLOCKENABLE();
+#endif /* defined(GPIOJ */
 }
 
 /**
@@ -33,15 +60,33 @@ void gpio_allport_clock_enable(void){
  * @param port gpio port selected.
  */
 void gpio_port_clock_enable(GPIO_TypeDef *port){
+#if defined(GPIOA)
 	if(port == GPIOA) {GPIOA_CLOCKENABLE(); return;}
+#endif /* defined(GPIOA */
+#if defined(GPIOB)
 	if(port == GPIOB) {GPIOB_CLOCKENABLE(); return;}
+#endif /* defined(GPIOB */
+#if defined(GPIOC)
 	if(port == GPIOC) {GPIOC_CLOCKENABLE(); return;}
+#endif /* defined(GPIOC */
+#if defined(GPIOD)
 	if(port == GPIOD) {GPIOD_CLOCKENABLE(); return;}
+#endif /* defined(GPIOD */
+#if defined(GPIOE)
 	if(port == GPIOE) {GPIOE_CLOCKENABLE(); return;}
+#endif /* defined(GPIOE */
+#if defined(GPIOF)
 	if(port == GPIOF) {GPIOF_CLOCKENABLE(); return;}
+#endif /* defined(GPIOF */
+#if defined(GPIOG)
 	if(port == GPIOG) {GPIOG_CLOCKENABLE(); return;}
+#endif /* defined(GPIOG */
+#if defined(GPIOH)
 	if(port == GPIOH) {GPIOH_CLOCKENABLE(); return;}
+#endif /* defined(GPIOH */
+#if defined(GPIOI)
 	if(port == GPIOI) {GPIOI_CLOCKENABLE(); return;}
+#endif /* defined(GPIO */
 
 }
 

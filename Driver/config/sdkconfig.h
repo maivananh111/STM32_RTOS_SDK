@@ -20,19 +20,19 @@
 #define Cortex_M4
 /* Device */
 #define STM32F407xx            			// Define STM32 device.
-#define RTOS							1
 
 /**
  * RTOS Configuration.
  */
-#if RTOS
 #define TOTAL_HEAP_SIZE                 (128U * 1024U)
 #define RTOS_HEAP_SIZE                  (20 * 1024U)
+#define APP_MAIN_TASK_SIZE              byte_to_word(4096)
+#define APP_MAIN_TASK_PRIO              1
+
 
 #define RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY   4 // Your system interrupt priority must be greater than this number.
 #define MAX_PRIORITY                    32
 #define byte_to_word(x)                 (x/4)
-#endif
 /**
  * Embedded flash memory configuration.
  */
@@ -76,14 +76,6 @@
 #define APB1_PRESCALER          		Clock_Div_4 // Hz (APB1 is PCLK1)
 #define APB2_PRESCALER          		Clock_Div_2 // Hz (APB1 is PCLK2)
 
-/**
- * Timer alternate for system tick if you use RTOS.
- */
-#if (RTOS)
-#define TIM_SYSTICK                     TIM1
-#define TIM_TICK_IRQ_HANDLER         	TIM1_UP_TIM10_IRQHandler
-
-#endif
 
 /**
  * Log monitor.

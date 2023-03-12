@@ -113,15 +113,36 @@ void gpio_toggle(GPIO_TypeDef *port, uint16_t pin);
 void gpio_set_level(GPIO_TypeDef *port, uint16_t pin, int level);
 int gpio_get_level(GPIO_TypeDef *port, uint16_t pin);
 
+#if defined(GPIOA)
 #define GPIOA_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN
+#endif /* defined(GPIOA */
+#if defined(GPIOB)
 #define GPIOB_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOBEN
+#endif /* defined(GPIOB */
+#if defined(GPIOC)
 #define GPIOC_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOCEN
+#endif /* defined(GPIOC */
+#if defined(GPIOD)
 #define GPIOD_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIODEN
+#endif /* defined(GPIOD */
+#if defined(GPIOE)
 #define GPIOE_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOEEN
+#endif /* defined(GPIOE */
+#if defined(GPIOF)
 #define GPIOF_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOFEN
+#endif /* defined(GPIOF */
+#if defined(GPIOG)
 #define GPIOG_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOGEN
+#endif /* defined(GPIOG */
+#if defined(GPIOH)
 #define GPIOH_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOHEN
+#endif /* defined(GPIOH */
+#if defined(GPIOI)
 #define GPIOI_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOIEN
+#endif /* defined(GPIOI */
+#if defined(GPIOJ)
+#define GPIOJ_CLOCKENABLE() RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOJEN
+#endif /* defined(GPIOJ */
 
 #ifdef __cplusplus
 }

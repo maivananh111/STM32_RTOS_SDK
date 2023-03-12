@@ -7,10 +7,9 @@
 
 
 #include "periph_en.h"
-
-#ifdef ENABLE_DMA
-
+#if defined(ENABLE_DMA)
 #include "dma.h"
+
 #include "systick.h"
 #include "stm_log.h"
 
@@ -38,10 +37,12 @@ return_t DMA::init(dma_config_t *conf){
 	return_t ret;
 	__IO uint32_t tmpreg;
 	_conf = conf;
-
+#if defined(DMA1)
 	if(_dma == DMA1) RCC -> AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+#endif /* defined(DMA1) */
+#if defined(DMA2)
 	if(_dma == DMA2) RCC -> AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-
+#endif /* defined(DMA2) */
 	_conf -> stream -> CR &=~ DMA_SxCR_EN;
 	ret = wait_flag_in_register_timeout(&(_conf -> stream -> CR), DMA_SxCR_EN, FLAG_RESET, 500U);
 	if(is_timeout(&ret)){
@@ -273,124 +274,130 @@ void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, dma_t dmaptr)
 	if(dmaptr -> Event_Callback != NULL) dmaptr -> Event_Callback(dmaptr -> Parameter, event);
 }
 
-/* DMA1 IRQ HANDLER */
-#ifdef ENABLE_DMA1_STREAM0
+/**
+ *  DMA1 IRQ HANDLER
+ */
+#if defined(ENABLE_DMA1_STREAM0) && defined(DMA1_Stream0)
 DMA dma1_0(DMA1);
 dma_t dma1_stream0 = &dma1_0;
 void DMA1_Stream0_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream0, dma1_stream0);
 }
-#endif
-#ifdef ENABLE_DMA1_STREAM1
+#endif /* defined(ENABLE_DMA1_STREAM0) && defined(DMA1_Stream0) */
+#if defined(ENABLE_DMA1_STREAM1) && defined(DMA1_Stream1)
 DMA dma1_1(DMA1);
 dma_t dma1_stream1 = &dma1_1;
 void DMA1_Stream1_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream1, dma1_stream1);
 }
-#endif
-#ifdef ENABLE_DMA1_STREAM2
+#endif /* defined(ENABLE_DMA1_STREAM1) && defined(DMA1_Stream1) */
+#if defined(ENABLE_DMA1_STREAM2) && defined(DMA1_Stream2)
 DMA dma1_2(DMA1);
 dma_t dma1_stream2 = &dma1_2;
 void DMA1_Stream2_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream2, dma1_stream2);
 }
-#endif
-#ifdef ENABLE_DMA1_STREAM3
+#endif /* defined(ENABLE_DMA1_STREAM2) && defined(DMA1_Stream2) */
+#if defined(ENABLE_DMA1_STREAM3) && defined(DMA1_Stream3)
 DMA dma1_3(DMA1);
 dma_t dma1_stream3 = &dma1_3;
 void DMA1_Stream3_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream3, dma1_stream3);
 }
-#endif
-#ifdef ENABLE_DMA1_STREAM4
+#endif /* defined(ENABLE_DMA1_STREAM3) && defined(DMA1_Stream3) */
+#if defined(ENABLE_DMA1_STREAM4) && defined(DMA1_Stream4)
 DMA dma1_4(DMA1);
 dma_t dma1_stream4 = &dma1_4;
 void DMA1_Stream4_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream4, dma1_stream4);
 
 }
-#endif
-#ifdef ENABLE_DMA1_STREAM5
+#endif /* defined(ENABLE_DMA1_STREAM4) && defined(DMA1_Stream4) */
+#if defined(ENABLE_DMA1_STREAM5) && defined(DMA1_Stream5)
 DMA dma1_5(DMA1);
 dma_t dma1_stream5 = &dma1_5;
 void DMA1_Stream5_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream5, dma1_stream5);
 }
-#endif
-#ifdef ENABLE_DMA1_STREAM6
+#endif /* defined(ENABLE_DMA1_STREAM5) && defined(DMA1_Stream5) */
+#if defined(ENABLE_DMA1_STREAM6) && defined(DMA1_Stream6)
 DMA dma1_6(DMA1);
 dma_t dma1_stream6 = &dma1_6;
 void DMA1_Stream6_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream6, dma1_stream6);
 }
-#endif
-#ifdef ENABLE_DMA1_STREAM7
+#endif /* defined(ENABLE_DMA1_STREAM6) && defined(DMA1_Stream6) */
+#if defined(ENABLE_DMA1_STREAM7) && defined(DMA1_Stream7)
 DMA dma1_7(DMA1);
 dma_t dma1_stream7 = &dma1_7;
 void DMA1_Stream7_IRQHandler(void){
 	DMA_IRQ_Handler(DMA1, DMA1_Stream7, dma1_stream7);
 }
-#endif
+#endif /* defined(ENABLE_DMA1_STREAM7) && defined(DMA1_Stream7) */
 
-/* DMA2 IRQ HANDLER */
-#ifdef ENABLE_DMA2_STREAM0
+
+
+/**
+ *  DMA2 IRQ HANDLER
+ */
+#if defined(ENABLE_DMA2_STREAM0) && defined(DMA2_Stream0)
 DMA dma2_0(DMA2);
 dma_t dma2_stream0 = &dma2_0;
 void DMA2_Stream0_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream0, dma2_stream0);
 }
-#endif
-#ifdef ENABLE_DMA2_STREAM1
+#endif /* defined(ENABLE_DMA2_STREAM0) && defined(DMA2_Stream0) */
+#if defined(ENABLE_DMA2_STREAM1) && defined(DMA2_Stream1)
 DMA dma2_1(DMA2);
 dma_t dma2_stream1 = &dma2_1;
 void DMA2_Stream1_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream1, dma2_stream1);
 }
-#endif
-#ifdef ENABLE_DMA2_STREAM2
+#endif /* defined(ENABLE_DMA2_STREAM1) && defined(DMA2_Stream1) */
+#if defined(ENABLE_DMA2_STREAM2) && defined(DMA2_Stream2)
 DMA dma2_2(DMA2);
 dma_t dma2_stream2 = &dma2_2;
 void DMA2_Stream2_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream2, dma2_stream2);
 }
-#endif
-#ifdef ENABLE_DMA2_STREAM3
+#endif /* defined(ENABLE_DMA2_STREAM2) && defined(DMA2_Stream2) */
+#if defined(ENABLE_DMA2_STREAM3) && defined(DMA2_Stream3)
 DMA dma2_3(DMA2);
 dma_t dma2_stream3 = &dma2_3;
 void DMA2_Stream3_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream3, dma2_stream3);
 }
-#endif
-#ifdef ENABLE_DMA2_STREAM4
+#endif /* defined(ENABLE_DMA2_STREAM3) && defined(DMA2_Stream3) */
+#if defined(ENABLE_DMA2_STREAM4) && defined(DMA2_Stream4)
 DMA dma2_4(DMA2);
 dma_t dma2_stream4 = &dma2_4;
 void DMA2_Stream4_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream4, dma2_stream4);
 }
-#endif
-#ifdef ENABLE_DMA2_STREAM5
+#endif /* defined(ENABLE_DMA2_STREAM4) && defined(DMA2_Stream4) */
+#if defined(ENABLE_DMA2_STREAM5) && defined(DMA2_Stream5)
 DMA dma2_5(DMA2);
 dma_t dma2_stream5 = &dma2_5;
 void DMA2_Stream5_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream5, dma2_stream5);
 }
-#endif
-#ifdef ENABLE_DMA2_STREAM6
+#endif /* defined(ENABLE_DMA2_STREAM5) && defined(DMA2_Stream5) */
+#if defined(ENABLE_DMA2_STREAM6) && defined(DMA2_Stream6)
 DMA dma2_6(DMA2);
 dma_t dma2_stream6 = &dma2_6;
 void DMA2_Stream6_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream6, dma2_stream6);
 }
-#endif
-#ifdef ENABLE_DMA2_STREAM7
+#endif /* defined(ENABLE_DMA2_STREAM6) && defined(DMA2_Stream6) */
+#if defined(ENABLE_DMA2_STREAM7) && defined(DMA2_Stream7)
 DMA dma2_7(DMA2);
 dma_t dma2_stream7 = &dma2_7;
 void DMA2_Stream7_IRQHandler(void){
 	DMA_IRQ_Handler(DMA2, DMA2_Stream7, dma2_stream7);
 }
-#endif
+#endif /* defined(ENABLE_DMA2_STREAM7) && defined(DMA2_Stream7) */
 
 
-#endif
+#endif /* ENABLE_DMA */
 
 

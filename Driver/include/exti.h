@@ -35,25 +35,25 @@ void exti_unregister_event_handler(void);
 
 #ifdef ENABLE_EXTI0
 void EXTI0_IRQHandler(void);             			/* EXTI Line0 interrupt */
-#endif
+#endif /* ENABLE_EXTI0 */
 #ifdef ENABLE_EXTI1
 void EXTI1_IRQHandler(void);              			/* EXTI Line1 interrupt */
-#endif
+#endif /* ENABLE_EXTI1 */
 #ifdef ENABLE_EXTI2
 void EXTI2_IRQHandler(void);              			/* EXTI Line2 interrupt */
-#endif
+#endif /* ENABLE_EXTI2 */
 #ifdef ENABLE_EXTI3
 void EXTI3_IRQHandler(void);              			/* EXTI Line3 interrupt */
-#endif
+#endif /* ENABLE_EXTI3 */
 #ifdef ENABLE_EXTI4
 void EXTI4_IRQHandler(void);              			/* EXTI Line4 interrupt */
-#endif
+#endif /* ENABLE_EXTI4 */
 #ifdef ENABLE_EXTI9_5
 void EXTI9_5_IRQHandler(void);             			/* EXTI Line[9:5] interrupts */
-#endif
+#endif /* ENABLE_EXTI9_5 */
 #ifdef ENABLE_EXTI15_10
 void EXTI15_10_IRQHandler(void);         			/* EXTI Line[15:10] interrupts */
-#endif
+#endif /* ENABLE_EXTI15_10 */
 
 
 

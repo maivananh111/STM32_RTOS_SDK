@@ -32,14 +32,14 @@ static void uart_log(char *log);
 static USART_TypeDef *log_uart = (USART_TypeDef *)LOG_UART_NUM;
 #endif
 
-
+void app_main_task(void *);
 
 int main(void){
 	system_init();
 
 	rcc_init(&rcc);
 
-	gpio_allport_clock_enable();
+	gpio_port_clock_enable(GPIOC);
 
 	gpio_set_mode(GPIOC, 6, GPIO_OUTPUT_PUSHPULL);
 	gpio_set(GPIOC, 6);
@@ -47,6 +47,9 @@ int main(void){
 #ifdef LOG_MONITOR
 	uart_log_init();
 	stm_log_init(uart_log);
+
+//	USBD_Delay
+
 
 	STM_LOGI(TAG, "SDK version   : %s", SDK_VERSION);
 	STM_LOGW(TAG, "Revision ID   : 0x%04x", get_revid());
@@ -57,22 +60,26 @@ int main(void){
 	STM_LOGR(TAG, "APB2 frequency: %luHz", rcc_get_bus_frequency(APB2));
 
 #endif
-
-
-#if RTOS
-	app_main();
+	xTaskCreate(app_main_task, "app_main_task", APP_MAIN_TASK_SIZE, NULL, APP_MAIN_TASK_PRIO, NULL);
+	STM_LOGI(TAG, "Starting scheduler on CPU.");
 	vTaskStartScheduler();
-#else
-	app_main();
-#endif
 }
 
 
+void app_main_task(void *param){
+	STM_LOGI(TAG, "Calling app_main.");
+	extern void app_main(void);
+	app_main();
+	STM_LOGI(TAG, "Returned from app_main.");
+	vTaskDelete(NULL);
+}
 
 #ifdef LOG_MONITOR
 static void uart_log_init(void){
 	__IO uint32_t USART_BusFreq = 0UL;
 
+	gpio_port_clock_enable(LOG_UART_TXP);
+	gpio_port_clock_enable(LOG_UART_RXP);
 	if(log_uart == USART1 || log_uart == USART2 || log_uart == USART3){
 		gpio_set_alternatefunction(LOG_UART_TXP, LOG_UART_TX, AF7_USART1_3);
 		gpio_set_alternatefunction(LOG_UART_RXP, LOG_UART_RX, AF7_USART1_3);

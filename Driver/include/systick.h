@@ -30,10 +30,7 @@ void delay_ms(uint32_t ms);
 void set_function_get_tick(uint32_t (*func_ptr)(void));
 void set_function_delay_ms(void(*func_ptr)(uint32_t));
 
-
-#if (RTOS == 0)
-	void SysTick_Handler(void);
-#endif
+void SysTick_Handler(void);
 
 
 #ifdef __cplusplus

@@ -29,13 +29,12 @@ return_t exti_init(GPIO_TypeDef *Port, uint16_t Pin, exti_edgedetect_t Edge, uin
 	uint8_t CRPos = 0;
 	IRQn_Type IRQn;
 
-#ifdef RTOS
 	if(Priority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
 		return ret;
 	}
-#endif
+
 
 	if(Pin < 4U) 					CRPos = 0;
 	else if(Pin >= 4U && Pin < 8U)  CRPos = 1;
@@ -111,27 +110,27 @@ void EXTI_IRQHandler(uint16_t Pin){
 void EXTI0_IRQHandler(void){
 	EXTI_IRQHandler(0);
 }
-#endif
+#endif /* ENABLE_EXTI0 */
 #ifdef ENABLE_EXTI1
 void EXTI1_IRQHandler(void){
 	EXTI_IRQHandler(1);
 }
-#endif
+#endif /* ENABLE_EXTI1 */
 #ifdef ENABLE_EXTI2
 void EXTI2_IRQHandler(void){
 	EXTI_IRQHandler(2);
 }
-#endif
+#endif /* ENABLE_EXTI2 */
 #ifdef ENABLE_EXTI3
 void EXTI3_IRQHandler(void){
 	EXTI_IRQHandler(3);
 }
-#endif
+#endif /* ENABLE_EXTI3 */
 #ifdef ENABLE_EXTI4
 void EXTI4_IRQHandler(void){
 	EXTI_IRQHandler(4);
 }
-#endif
+#endif /* ENABLE_EXTI4 */
 #ifdef ENABLE_EXTI9_5
 void EXTI9_5_IRQHandler(void){
 	EXTI_IRQHandler(5);
@@ -140,7 +139,7 @@ void EXTI9_5_IRQHandler(void){
 	EXTI_IRQHandler(8);
 	EXTI_IRQHandler(9);
 }
-#endif
+#endif /* ENABLE_EXTI9_5 */
 #ifdef ENABLE_EXTI15_10
 void EXTI15_10_IRQHandler(void){
 	EXTI_IRQHandler(10);
@@ -150,7 +149,7 @@ void EXTI15_10_IRQHandler(void){
 	EXTI_IRQHandler(14);
 	EXTI_IRQHandler(15);
 }
-#endif
+#endif /* ENABLE_EXTI15_10 */
 }
 
 #endif

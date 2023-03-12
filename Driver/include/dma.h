@@ -137,78 +137,83 @@ typedef DMA* dma_t;
 
 void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, dma_t dmaptr);
 
+/**
+ *  DMA1 Stream class.
+ */
 /* DMA1 IRQ HANDLER */
-#ifdef ENABLE_DMA1_STREAM0
+#if defined(ENABLE_DMA1_STREAM0) && defined(DMA1_Stream0)
 void DMA1_Stream0_IRQHandler(void);
 extern dma_t dma1_stream0;
-#endif
-#ifdef ENABLE_DMA1_STREAM1
+#endif /* defined(ENABLE_DMA1_STREAM0) && defined(DMA1_Stream0) */
+#if defined(ENABLE_DMA1_STREAM1) && defined(DMA1_Stream1)
 void DMA1_Stream1_IRQHandler(void);
 extern dma_t dma1_stream1;
-#endif
-#ifdef ENABLE_DMA1_STREAM2
+#endif /* defined(ENABLE_DMA1_STREAM1) && defined(DMA1_Stream1) */
+#if defined(ENABLE_DMA1_STREAM2) && defined(DMA1_Stream2)
 void DMA1_Stream2_IRQHandler(void);
 extern dma_t dma1_stream2;
-#endif
-#ifdef ENABLE_DMA1_STREAM3
+#endif /* defined(ENABLE_DMA1_STREAM2) && defined(DMA1_Stream2) */
+#if defined(ENABLE_DMA1_STREAM3) && defined(DMA1_Stream3)
 void DMA1_Stream3_IRQHandler(void);
 extern dma_t dma1_stream3;
-#endif
-#ifdef ENABLE_DMA1_STREAM4
+#endif /* defined(ENABLE_DMA1_STREAM3) && defined(DMA1_Stream3) */
+#if defined(ENABLE_DMA1_STREAM4) && defined(DMA1_Stream4)
 void DMA1_Stream4_IRQHandler(void);
 extern dma_t dma1_stream4;
-#endif
-#ifdef ENABLE_DMA1_STREAM5
+#endif /* defined(ENABLE_DMA1_STREAM4) && defined(DMA1_Stream4) */
+#if defined(ENABLE_DMA1_STREAM5) && defined(DMA1_Stream5)
 void DMA1_Stream5_IRQHandler(void);
 extern dma_t dma1_stream5;
-#endif
-#ifdef ENABLE_DMA1_STREAM6
+#endif /* defined(ENABLE_DMA1_STREAM5) && defined(DMA1_Stream5) */
+#if defined(ENABLE_DMA1_STREAM6) && defined(DMA1_Stream6)
 void DMA1_Stream6_IRQHandler(void);
 extern dma_t dma1_stream6;
-#endif
-#ifdef ENABLE_DMA1_STREAM7
+#endif /* defined(ENABLE_DMA1_STREAM6) && defined(DMA1_Stream6) */
+#if defined(ENABLE_DMA1_STREAM7) && defined(DMA1_Stream7)
 void DMA1_Stream7_IRQHandler(void);
 extern dma_t dma1_stream7;
-#endif
+#endif /* defined(ENABLE_DMA1_STREAM7) && defined(DMA1_Stream7) */
 
-/* DMA2 IRQ HANDLER */
-#ifdef ENABLE_DMA2_STREAM0
+/**
+ *  DMA2 Stream class.
+ */
+#if defined(ENABLE_DMA2_STREAM0) && defined(DMA2_Stream0)
 void DMA2_Stream0_IRQHandler(void);
 extern dma_t dma2_stream0;
-#endif
-#ifdef ENABLE_DMA2_STREAM1
+#endif /* defined(ENABLE_DMA2_STREAM0) && defined(DMA2_Stream0) */
+#if defined(ENABLE_DMA2_STREAM1) && defined(DMA2_Stream1)
 void DMA2_Stream1_IRQHandler(void);
 extern dma_t dma2_stream1;
-#endif
-#ifdef ENABLE_DMA2_STREAM2
+#endif /* defined(ENABLE_DMA2_STREAM1) && defined(DMA2_Stream1) */
+#if defined(ENABLE_DMA2_STREAM2) && defined(DMA2_Stream2)
 void DMA2_Stream2_IRQHandler(void);
 extern dma_t dma2_stream2;
-#endif
-#ifdef ENABLE_DMA2_STREAM3
+#endif /* defined(ENABLE_DMA2_STREAM2) && defined(DMA2_Stream2) */
+#if defined(ENABLE_DMA2_STREAM3) && defined(DMA2_Stream3)
 void DMA2_Stream3_IRQHandler(void);
 extern dma_t dma2_stream3;
-#endif
-#ifdef ENABLE_DMA2_STREAM4
+#endif /* defined(ENABLE_DMA2_STREAM3) && defined(DMA2_Stream3) */
+#if defined(ENABLE_DMA2_STREAM4) && defined(DMA2_Stream4)
 void DMA2_Stream4_IRQHandler(void);
 extern dma_t dma2_stream4;
-#endif
-#ifdef ENABLE_DMA2_STREAM5
+#endif /* defined(ENABLE_DMA2_STREAM4) && defined(DMA2_Stream4) */
+#if defined(ENABLE_DMA2_STREAM5) && defined(DMA2_Stream5)
 void DMA2_Stream5_IRQHandler(void);
 extern dma_t dma2_stream5;
-#endif
-#ifdef ENABLE_DMA2_STREAM6
+#endif /* defined(ENABLE_DMA2_STREAM5) && defined(DMA2_Stream5) */
+#if defined(ENABLE_DMA2_STREAM6) && defined(DMA2_Stream6)
 void DMA2_Stream6_IRQHandler(void);
 extern dma_t dma2_stream6;
-#endif
-#ifdef ENABLE_DMA2_STREAM7
+#endif /* defined(ENABLE_DMA2_STREAM6) && defined(DMA2_Stream6) */
+#if defined(ENABLE_DMA2_STREAM7) && defined(DMA2_Stream7)
 void DMA2_Stream7_IRQHandler(void);
 extern dma_t dma2_stream7;
-#endif
+#endif /* defined(ENABLE_DMA2_STREAM7) && defined(DMA2_Stream7) */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* ENABLE_DMA */
 
 #endif /* DMA_H_ */

@@ -5,12 +5,14 @@
  *      Author: anh
  */
 
+#include "stdio.h"
+
 #include "systick.h"
 #include "sdkconfig.h"
 #include "system.h"
 
-#include "stdio.h"
-
+#include "FreeRTOS.h"
+#include "task.h"
 
 
 volatile uint32_t tick;
@@ -20,13 +22,12 @@ static uint32_t (*get_tick_func)(void) = systick_get_tick;
 
 
 
-#if (!RTOS)
+
 void systick_init(uint32_t systick_priority){
 	SysTick_Config(SystemCoreClock / SYSTICK_RATE);
 
 	NVIC_Set_Priority(SysTick_IRQn, systick_priority, 0U);
 }
-#endif
 
 void increment_tick(void){
 	tick++;
@@ -61,14 +62,16 @@ void set_function_delay_ms(void(*func_ptr)(uint32_t)){
 	delay_ms_func = func_ptr;
 }
 
-
-#if (!RTOS)
 extern "C"{
 	void SysTick_Handler(void){
 		increment_tick();
+		if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED){
+			xPortSysTickHandler();
+		}
+
 	}
 }
-#endif
+
 
 
 

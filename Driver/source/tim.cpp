@@ -173,13 +173,13 @@ return_t TIM::start_it(void){
 		return ret;
 	}
 
-#ifdef RTOS
+
 	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
 		return ret;
 	}
-#endif
+
 
 	if(_tim -> CR1 & TIM_CR1_CEN){
 		set_return(&ret, BUSY, __LINE__);
@@ -354,13 +354,13 @@ return_t TIM::pwm_output_start_it(tim_channel_t channel, uint32_t pwm){
 		return ret;
 	}
 
-#ifdef RTOS
+
 	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
 		return ret;
 	}
-#endif
+
 
 	if(_tim -> CR1 & TIM_CR1_CEN){
 		set_return(&ret, BUSY, __LINE__);
@@ -721,13 +721,13 @@ return_t TIM::encoder_start_it(void){
 		return ret;
 	}
 
-#ifdef RTOS
+
 	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
 		return ret;
 	}
-#endif
+
 
 	if(_tim -> CR1 & TIM_CR1_CEN){
 		set_return(&ret, BUSY, __LINE__);

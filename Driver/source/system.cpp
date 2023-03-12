@@ -12,9 +12,6 @@
 #include "stdio.h"
 #include "malloc.h"
 
-#if(RTOS)
-#include "rtostick.h"
-#endif
 
 
 extern "C" char *sbrk(int i);
@@ -39,11 +36,8 @@ void system_init(void){
 	embedded_flash_init();
 
 	__NVIC_SetPriorityGrouping(0x03U);
-#if (!RTOS)
+
 	systick_init(SYSTICK_PRIORITY);
-#else
-	tim_for_tick_init(SYSTICK_PRIORITY);
-#endif
 
 	RCC -> APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 	RCC -> APB1ENR |= RCC_APB1ENR_PWREN;

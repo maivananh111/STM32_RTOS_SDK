@@ -14,9 +14,7 @@
 #include "stdio.h"
 #include "math.h"
 
-#if(RTOS)
-#include "rtostick.h"
-#endif
+
 
 #define RCC_HSI_TIMEOUT          100U
 #define RCC_HSE_TIMEOUT          200U
@@ -164,11 +162,7 @@ return_t rcc_init(RCC_Config_t *rcc_conf){
 	/**
 	 * ReInit system tick.
 	 */
-#if (!RTOS)
 	systick_init(SYSTICK_PRIORITY);
-#else
-	tim_for_tick_init(SYSTICK_PRIORITY);
-#endif
 
 	return ret;
 }
@@ -225,11 +219,8 @@ return_t rcc_deinit(void){
 	/**
 	 * ReInit system tick.
 	 */
-#if (!RTOS)
 	systick_init(SYSTICK_PRIORITY);
-#else
-	tim_for_tick_init(SYSTICK_PRIORITY);
-#endif
+
 
 	return ret;
 }

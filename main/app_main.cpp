@@ -7,16 +7,21 @@
 
 #include "main.h"
 #include "stdlib.h"
+#include "string.h"
 
 #include "gpio.h"
 #include "exti.h"
 #include "tim.h"
+#include "usart.h"
+
+#include "event_groups.h"
+
 
 
 static const char *TAG = "MAIN";
 
 QueueHandle_t exti_queue = NULL;
-
+QueueHandle_t usart_queue = NULL;
 
 dma_config_t dma1_stream0_channel6_conf = {
 	.stream = DMA1_Stream0,
@@ -26,13 +31,6 @@ dma_config_t dma1_stream0_channel6_conf = {
 	.datasize = DMA_DATA32BIT,
 	.interruptselect = DMA_TRANSFER_COMPLETE_INTERRUPT,
 	.interruptpriority = 5,
-};
-
-tim_config_t tim3_conf = {
-	.prescaler = 42000,
-	.reload = 60000,
-	.interrupt = TIM_INTERRUPT_ENABLE,
-	.interruptpriority = 6,
 };
 
 tim_config_t tim5_conf = {
@@ -47,20 +45,29 @@ tim_pwm_t tim5_ch3_conf = {
 	.preload = TIM_PRELOAD_ENABLE,
 	.fastmode = TIM_FASTMODE_ENABLE,
 };
-uint32_t *aloc_buf;
+
+usart_config_t usart1_conf = {
+	.baudrate = 115200,
+	.control  = USART_INTERRUPT_CONTROl,
+	.interruptselect = USART_RECEIVE_INTERRUPT,
+	.interruptpriority = 5,
+	.txport = GPIOB,
+	.txpin = 6,
+	.rxport = GPIOB,
+	.rxpin = 7,
+};
 
 return_t ret;
 
 void task_blink(void *param);
-void task_logmem(void *param);
 void task_exti(void *param);
 void task_pwm(void *param);
+void task_usart1(void *param);
 
-void exti_eventhandler(uint16_t pin, void *param);
-void tim3_eventhandler(tim_channel_t channel, tim_event_t event, void *param);
-void Dma1_Stream0_eventhandler(void *Parameter, dma_event_t event);
+void exti_event_handler(uint16_t, void *);
+void usart1_event_handler(usart_event_t, void*);
 
-uint32_t tim5_ch3_pwm = 1;
+uint32_t tim5_ch3_pwm = 999;
 
 void app_main(void){
 	gpio_port_clock_enable(GPIOE);
@@ -71,7 +78,7 @@ void app_main(void){
 	exti_init(GPIOE, 2, EXTI_FALLING_EDGE, 4);
 	gpio_set_pullup(GPIOE, 2);
 
-	exti_register_event_handler(exti_eventhandler, NULL);
+	exti_register_event_handler(exti_event_handler, NULL);
 
 	gpio_port_clock_enable(GPIOC);
 	gpio_config_t pc13 = {
@@ -84,16 +91,11 @@ void app_main(void){
 	};
 	gpio_init(&pc13);
 
-	ret = tim3->init(&tim3_conf);
-	if(!is_oke(&ret)) STM_LOGE(TAG, "TIM3 initialize fail.");
-	tim3->register_event_handler(tim3_eventhandler, NULL);
-	ret = tim3->start_it();
-	if(!is_oke(&ret)) STM_LOGE(TAG, "TIM3 start fail.");
-
+	usart1.init(&usart1_conf);
+	usart1.register_event_handler(usart1_event_handler, NULL);
 
 	ret = dma1_stream0->init(&dma1_stream0_channel6_conf);
 	if(!is_oke(&ret)) STM_LOGE(TAG, "DMA1 Stream0 Channel6 initialize fail.");
-	dma1_stream0->register_event_handler(Dma1_Stream0_eventhandler, NULL);
 
 	ret = tim5->init(&tim5_conf);
 	if(!is_oke(&ret)) STM_LOGE(TAG, "TIM5 initialize fail.");
@@ -101,15 +103,20 @@ void app_main(void){
 	tim5->pwm_output_start_dma(TIM_CHANNEL3, &tim5_ch3_pwm, 1);
 
 	exti_queue = xQueueCreate(30, sizeof(char*));
-	if(exti_queue == NULL) STM_LOGE(TAG, "Queue create failed.");
-	else STM_LOGI(TAG, "Queue create oke.");
+	usart_queue = xQueueCreate(5, sizeof(char*));
 
+//	EVENT_BIT
 
-	xTaskCreate(task_logmem, "task_logmem", byte_to_word(1024), NULL, 3, NULL);
 	xTaskCreate(task_blink, "task_blink", byte_to_word(1024), NULL, 2, NULL);
 	xTaskCreate(task_exti, "task_exti", byte_to_word(1024), NULL, 4, NULL);
 	xTaskCreate(task_pwm, "task_pwm", byte_to_word(1024), NULL, 2, NULL);
+	xTaskCreate(task_usart1, "task_usart", byte_to_word(2048), NULL, 10, NULL);
 
+
+	while(1){
+		STM_LOGW(TAG, "app_main running.");
+		vTaskDelay(500);
+	}
 }
 
 void task_blink(void *param){
@@ -117,21 +124,10 @@ void task_blink(void *param){
 	while(1){
 		gpio_set(GPIOC, 13);
 		vTaskDelay(10);
-		STM_LOGD(TAG, "Task blink led.");
+		STM_LOGM(TAG, "heap: %lu", get_free_heap_size());
 		gpio_reset(GPIOC, 13);
-		vTaskDelay(5000);
+		vTaskDelay(500);
 
-	}
-}
-
-void task_logmem(void *param){
-
-	while(1){
-		aloc_buf = (uint32_t *)malloc(1000*sizeof(uint32_t));
-		if(aloc_buf)
-		STM_LOGM(TAG, "Free heap size: %lu", get_free_heap_size());
-		vTaskDelay(1000);
-		free(aloc_buf);
 	}
 }
 
@@ -139,37 +135,42 @@ void task_exti(void *param){
 	uint16_t i = 0;;
 
 	while(1){
-		if(xQueueReceive(exti_queue, &i, portMAX_DELAY) == pdPASS){
+		if(xQueueReceiveFromISR(exti_queue, &i, NULL) == pdPASS){
 			STM_LOGI(TAG, "External interrupt line %d", i);
 		}
-		else{
-			STM_LOGE(TAG, "Queue empty.");
-		}
-		vTaskDelay(50);
+		vTaskDelay(500);
 	}
 }
 
 void task_pwm(void *param){
 
 	while(1){
-		tim5_ch3_pwm++;
-		if(tim5_ch3_pwm == 999) tim5_ch3_pwm = 0;
-//		STM_LOGI(TAG, "PWM Value = %d", tim2_ch3_pwm);
-//		tim2->pwm_set_duty(TIM_CHANNEL3, tim5_ch3_pwm);
+		tim5_ch3_pwm--;
+		if(tim5_ch3_pwm == 0) tim5_ch3_pwm = 999;
 		vTaskDelay(2);
 	}
-
 }
 
+void task_usart1(void *param){
+	uint8_t *usart1_data;
+	usart1.receive_to_idle_start_it(30);
 
-void exti_eventhandler(uint16_t pin, void *param){
+	while(1){
+		if(xQueueReceiveFromISR(usart_queue, &usart1_data, NULL) == pdPASS){
+			STM_LOGI(TAG, "USART RX: %s", (char *)usart1_data);
+			free(usart1_data);
+		}
+		vTaskDelay(10);
+	}
+}
+
+void exti_event_handler(uint16_t pin, void *param){
 	uint16_t i = pin;
 	BaseType_t xTaskWokenByReceive;
 
 	STM_LOGR(TAG, "Line %d interrupt.", i);
 	if(exti_queue != NULL){
 		if(xQueueSendFromISR(exti_queue, &i, &xTaskWokenByReceive) == pdPASS) {
-			STM_LOGI(TAG, "Queue sended oke.");
 			portEND_SWITCHING_ISR(xTaskWokenByReceive);
 		}
 		else {
@@ -178,16 +179,22 @@ void exti_eventhandler(uint16_t pin, void *param){
 	}
 }
 
-void tim3_eventhandler(tim_channel_t channel, tim_event_t event, void *param){
-	if(event == TIM_UPDATE_EVENT){
-		STM_LOGI(TAG, "Timer 3 update event.");
+void usart1_event_handler(usart_event_t event, void *param){
+
+	if(event == USART_EVENT_IDLE_STATE || event == USART_EVENT_BUFFER_OVERFLOW){
+		uint8_t *tmp;
+		usart1.get_buffer(&tmp);
+
+ 		if(usart_queue != NULL){
+			if(xQueueSendFromISR(usart_queue, &tmp, NULL) == pdPASS) {
+				portEND_SWITCHING_ISR(NULL);
+			}
+			else {
+				STM_LOGW(TAG, "Queue send failed.");
+			}
+		}
 	}
 }
-
-void Dma1_Stream0_eventhandler(void *Parameter, dma_event_t event){
-
-}
-
 
 
 
