@@ -106,7 +106,7 @@ void NVIC_Set_Priority(IRQn_Type IRQn, uint32_t PreemptPriority, uint32_t SubPri
 	__NVIC_SetPriority(IRQn, NVIC_EncodePriority(prioritygroup, PreemptPriority, SubPriority));
 }
 
-memory_info_t get_memory_info(void){
+memory_info_t stm_get_memory_info(void){
 	memory_info_t mem;
 	char *heapend = (char*)sbrk(0);
 	char * stack_ptr = (char*)__get_MSP();
@@ -121,7 +121,7 @@ memory_info_t get_memory_info(void){
 	return mem;
 }
 
-uint32_t get_free_heap_size(void){
+uint32_t stm_get_free_heap_size(void){
 	char *heapend = (char*)sbrk(0);
 	char * stack_ptr = (char*)__get_MSP();
 	struct mallinfo mi = mallinfo();
@@ -129,7 +129,7 @@ uint32_t get_free_heap_size(void){
 	return ((stack_ptr < minSP) ? stack_ptr : minSP) - heapend + mi.fordblks;
 }
 
-uint32_t get_used_heap_size(void){
+uint32_t stm_get_used_heap_size(void){
 	struct mallinfo mi = mallinfo();
 
 	return mi.uordblks;

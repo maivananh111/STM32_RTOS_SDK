@@ -5,14 +5,15 @@
  *      Author: anh
  */
 
-#include "periph_en.h"
+#include "peripheral_enable.h"
 
-#ifdef ENABLE_EXTI
+#if ENABLE_EXTI
 
 #include "sdkconfig.h"
 #include "exti.h"
 #include "stdio.h"
 #include "system.h"
+#include "systick.h"
 #include "stm_log.h"
 
 
@@ -32,6 +33,11 @@ return_t exti_init(GPIO_TypeDef *Port, uint16_t Pin, exti_edgedetect_t Edge, uin
 	if(Priority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+#if CHIP_RESET_IF_CONFIG_FAIL
+		STM_LOGI(TAG, "Chip will reset after %ds.", WAIT_FOR_RESET_TIME);
+		delay_ms(WAIT_FOR_RESET_TIME*1000U);
+		__NVIC_SystemReset();
+#endif /* CHIP_RESET_IF_CONFIG_FAIL */
 		return ret;
 	}
 

@@ -4,9 +4,8 @@
  *  Created on: Jan 5, 2023
  *      Author: anh
  */
-#include "periph_en.h"
+#include "peripheral_enable.h"
 
-#ifdef ENABLE_GPIO
 
 #include "gpio.h"
 
@@ -346,7 +345,6 @@ int gpio_get_level(GPIO_TypeDef *port, uint16_t pin){
 }
 
 
-#endif
 
 
 

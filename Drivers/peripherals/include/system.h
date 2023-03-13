@@ -42,9 +42,9 @@ void embedded_flash_update_latency(void);
 
 void NVIC_Set_Priority(IRQn_Type IRQn, uint32_t PreemptPriority, uint32_t SubPriority);
 
-memory_info_t get_memory_info(void);
-uint32_t get_free_heap_size(void);
-uint32_t get_used_heap_size(void);
+memory_info_t stm_get_memory_info(void);
+uint32_t stm_get_free_heap_size(void);
+uint32_t stm_get_used_heap_size(void);
 
 void NMI_Handler(void);
 void HardFault_Handler(void);

@@ -9,9 +9,6 @@
 #define GPIO_H_
 
 
-#include "periph_en.h"
-
-#ifdef ENABLE_GPIO
 
 #include "sdkconfig.h"
 
@@ -148,6 +145,5 @@ int gpio_get_level(GPIO_TypeDef *port, uint16_t pin);
 }
 #endif
 
-#endif
 
 #endif /* GPIO_H_ */

@@ -5,8 +5,8 @@
  *      Author: anh
  */
 
-#ifndef MAIN_H_
-#define MAIN_H_
+#ifndef STARTUP_H_
+#define STARTUP_H_
 
 #ifdef __cplusplus
 extern "C"{
@@ -16,21 +16,24 @@ extern "C"{
 #include "stm32f4xx.h"
 
 #include "task.h"
-#include "queue.h"
-#include "semphr.h"
 
 #include "system.h"
 #include "systick.h"
 #include "rcc.h"
 #include "gpio.h"
+#include "iwdg.h"
 
 #include "stm_log.h"
 
+#ifdef LOG_MONITOR
+static void uart_log_init(void);
+static void uart_log(char *log);
+#endif
 
-void app_main(void);
+void app_main_task(void *);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* MAIN_H_ */
+#endif /* STARTUP_H_ */

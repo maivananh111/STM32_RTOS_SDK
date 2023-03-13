@@ -4,11 +4,18 @@
  *  Created on: Jan 5, 2023
  *      Author: anh
  */
-
-#include "main.h"
+#include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+
+#include "iwdg.h"
+#include "stm_log.h"
+
+#include "system.h"
 #include "gpio.h"
 #include "exti.h"
 #include "tim.h"
@@ -91,8 +98,8 @@ void app_main(void){
 	};
 	gpio_init(&pc13);
 
-	usart1.init(&usart1_conf);
-	usart1.register_event_handler(usart1_event_handler, NULL);
+	usart1->init(&usart1_conf);
+	usart1->register_event_handler(usart1_event_handler, NULL);
 
 	ret = dma1_stream0->init(&dma1_stream0_channel6_conf);
 	if(!is_oke(&ret)) STM_LOGE(TAG, "DMA1 Stream0 Channel6 initialize fail.");
@@ -105,7 +112,6 @@ void app_main(void){
 	exti_queue = xQueueCreate(30, sizeof(char*));
 	usart_queue = xQueueCreate(5, sizeof(char*));
 
-//	EVENT_BIT
 
 	xTaskCreate(task_blink, "task_blink", byte_to_word(1024), NULL, 2, NULL);
 	xTaskCreate(task_exti, "task_exti", byte_to_word(1024), NULL, 4, NULL);
@@ -124,10 +130,9 @@ void task_blink(void *param){
 	while(1){
 		gpio_set(GPIOC, 13);
 		vTaskDelay(10);
-		STM_LOGM(TAG, "heap: %lu", get_free_heap_size());
+		STM_LOGM(TAG, "heap: %lu", stm_get_free_heap_size());
 		gpio_reset(GPIOC, 13);
-		vTaskDelay(500);
-
+		vTaskDelay(10000);
 	}
 }
 
@@ -135,8 +140,11 @@ void task_exti(void *param){
 	uint16_t i = 0;;
 
 	while(1){
-		if(xQueueReceiveFromISR(exti_queue, &i, NULL) == pdPASS){
+		if(xQueueReceive(exti_queue, &i, 10) == pdPASS){
 			STM_LOGI(TAG, "External interrupt line %d", i);
+		}
+		else{
+			STM_LOGE(TAG, "External interrupt Queue Empty.");
 		}
 		vTaskDelay(500);
 	}
@@ -153,7 +161,7 @@ void task_pwm(void *param){
 
 void task_usart1(void *param){
 	uint8_t *usart1_data;
-	usart1.receive_to_idle_start_it(30);
+	usart1->receive_to_idle_start_it(30);
 
 	while(1){
 		if(xQueueReceiveFromISR(usart_queue, &usart1_data, NULL) == pdPASS){
@@ -183,7 +191,7 @@ void usart1_event_handler(usart_event_t event, void *param){
 
 	if(event == USART_EVENT_IDLE_STATE || event == USART_EVENT_BUFFER_OVERFLOW){
 		uint8_t *tmp;
-		usart1.get_buffer(&tmp);
+		usart1->get_buffer(&tmp);
 
  		if(usart_queue != NULL){
 			if(xQueueSendFromISR(usart_queue, &tmp, NULL) == pdPASS) {

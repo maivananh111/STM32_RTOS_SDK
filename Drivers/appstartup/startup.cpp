@@ -1,10 +1,11 @@
 
+#include "../appstartup/startup.h"
+
 #include "stdio.h"
 #include "stdlib.h"
 #include "stdint.h"
 #include "math.h"
 
-#include "main.h"
 
 
 RCC_Config_t rcc = {
@@ -24,23 +25,21 @@ RCC_Config_t rcc = {
 	rcc.pll.pllq = PLLQ,
 };
 
-
 #ifdef LOG_MONITOR
-static const char* TAG = (const char *)"CPU Start";
-static void uart_log_init(void);
-static void uart_log(char *log);
+static const char* TAG = (const char *)"STARTUP";
 static USART_TypeDef *log_uart = (USART_TypeDef *)LOG_UART_NUM;
 #endif
 
-void app_main_task(void *);
 
 int main(void){
 	system_init();
-
 	rcc_init(&rcc);
 
-	gpio_port_clock_enable(GPIOC);
+#if RTOS_IWDG
+	iwdg_init(IWDG_PRESCALER_64, 2500);
+#endif
 
+	gpio_port_clock_enable(GPIOC);
 	gpio_set_mode(GPIOC, 6, GPIO_OUTPUT_PUSHPULL);
 	gpio_set(GPIOC, 6);
 
@@ -48,16 +47,13 @@ int main(void){
 	uart_log_init();
 	stm_log_init(uart_log);
 
-//	USBD_Delay
-
-
-	STM_LOGI(TAG, "SDK version   : %s", SDK_VERSION);
+	STM_LOGI(TAG, "SDK version   : %s",     SDK_VERSION);
 	STM_LOGW(TAG, "Revision ID   : 0x%04x", get_revid());
 	STM_LOGE(TAG, "Device ID     : 0x%04x", get_devid());
-	STM_LOGD(TAG, "Core frequency: %luHz", rcc_get_bus_frequency(SYSCLK));
-	STM_LOGM(TAG, "AHB frequency : %luHz", rcc_get_bus_frequency(AHB));
-	STM_LOGP(TAG, "APB1 frequency: %luHz", rcc_get_bus_frequency(APB1));
-	STM_LOGR(TAG, "APB2 frequency: %luHz", rcc_get_bus_frequency(APB2));
+	STM_LOGD(TAG, "Core frequency: %luHz",  rcc_get_bus_frequency(SYSCLK));
+	STM_LOGM(TAG, "AHB frequency : %luHz",  rcc_get_bus_frequency(AHB));
+	STM_LOGP(TAG, "APB1 frequency: %luHz",  rcc_get_bus_frequency(APB1));
+	STM_LOGR(TAG, "APB2 frequency: %luHz",  rcc_get_bus_frequency(APB2));
 
 #endif
 	xTaskCreate(app_main_task, "app_main_task", APP_MAIN_TASK_SIZE, NULL, APP_MAIN_TASK_PRIO, NULL);
@@ -67,11 +63,21 @@ int main(void){
 
 
 void app_main_task(void *param){
-	STM_LOGI(TAG, "Calling app_main.");
+	STM_LOGI(TAG, "Calling app_main().");
 	extern void app_main(void);
 	app_main();
-	STM_LOGI(TAG, "Returned from app_main.");
+	STM_LOGI(TAG, "Returned from app_main().");
 	vTaskDelete(NULL);
+}
+extern"C"{
+	void vApplicationIdleHook(void){
+		/* Do something while cpu idle. */
+
+#ifdef RTOS_IWDG
+		/* Reset Independent Watchdog timer */
+		iwdg_refresh();
+#endif /* RTOS_IWDG */
+	}
 }
 
 #ifdef LOG_MONITOR
@@ -120,7 +126,6 @@ static void uart_log(char *log){
 		while(!(log_uart -> SR & USART_SR_TC));
 	}
 }
-
 #endif
 
 

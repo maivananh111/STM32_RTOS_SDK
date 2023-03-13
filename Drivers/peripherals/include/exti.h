@@ -8,9 +8,9 @@
 #ifndef EXTI_H_
 #define EXTI_H_
 
-#include "periph_en.h"
+#include "peripheral_enable.h"
 
-#ifdef ENABLE_EXTI
+#if ENABLE_EXTI
 
 #ifdef __cplusplus
 extern "C" {

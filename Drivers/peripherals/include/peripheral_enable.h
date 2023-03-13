@@ -10,18 +10,18 @@
 
 
 
-#define ENABLE_EXTI
-#define ENABLE_GPIO
-#define ENABLE_TIM
-#define ENABLE_DMA
-#define ENABLE_USART
-#define ENABLE_I2C
-#define ENABLE_USB
+#define ENABLE_EXTI         1
+#define ENABLE_TIM			1
+#define ENABLE_DMA			1
+#define ENABLE_USART		1
+#define ENABLE_SPI			1
+#define ENABLE_I2C			1
+#define ENABLE_IWDG			1
 
 /**
  *  EXTI ENABLE
  */
-#if defined(ENABLE_EXTI)
+#if ENABLE_EXTI
 //#define ENABLE_EXTI0
 //#define ENABLE_EXTI1
 #define ENABLE_EXTI2
@@ -34,7 +34,7 @@
 /**
  * DMA STREAM ENABLE.
  */
-#if defined(ENABLE_DMA)
+#if ENABLE_DMA
 #define ENABLE_DMA1_STREAM0
 //#define ENABLE_DMA1_STREAM1
 //#define ENABLE_DMA1_STREAM2
@@ -57,10 +57,10 @@
 /**
  * TIM ENABLE
  */
-#if defined(ENABLE_TIM)
+#if ENABLE_TIM
 //#define ENABLE_TIM1
 //#define ENABLE_TIM2
-#define ENABLE_TIM3
+//#define ENABLE_TIM3
 //#define ENABLE_TIM4
 #define ENABLE_TIM5
 //#define ENABLE_TIM6
@@ -77,13 +77,13 @@
 /**
  * USART ENABLE
  */
-#if defined(ENABLE_USART)
+#if ENABLE_USART
 #define ENABLE_USART1
-//#define ENABLE_USART2
-//#define ENABLE_USART3
-//#define ENABLE_UART4
-//#define ENABLE_UART5
-//#define ENABLE_USART6
+#define ENABLE_USART2
+#define ENABLE_USART3
+#define ENABLE_UART4
+#define ENABLE_UART5
+#define ENABLE_USART6
 #endif /* ENABLE_USART */
 
 #endif /* PERIPH_EN_H_ */

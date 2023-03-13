@@ -24,21 +24,23 @@
 /**
  * RTOS Configuration.
  */
-#define TOTAL_HEAP_SIZE                 (128U * 1024U)
-#define RTOS_HEAP_SIZE                  (20 * 1024U)
-#define APP_MAIN_TASK_SIZE              byte_to_word(4096)
-#define APP_MAIN_TASK_PRIO              1
+#define TOTAL_HEAP_SIZE                 	 (128U * 1024U)
+#define RTOS_HEAP_SIZE                  	 (20 * 1024U)
+#define APP_MAIN_TASK_SIZE              	 byte_to_word(4096)
+#define APP_MAIN_TASK_PRIO              	 1
 
 
 #define RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY   4 // Your system interrupt priority must be greater than this number.
-#define MAX_PRIORITY                    32
-#define byte_to_word(x)                 (x/4)
+#define RTOS_TASK_MAX_PRIORITY               32
+#define RTOS_TICK_RATE                       SYSTICK_RATE
+#define byte_to_word(x)                      (x/4)
+#define RTOS_IWDG                            1
 /**
  * Embedded flash memory configuration.
  */
-#define FLASH_DATA_CACHE				1
-#define FLASH_INSTRUCTION_CACHE         1
-#define FLASH_PREFETCH_MODE             1
+#define FLASH_DATA_CACHE					 1
+#define FLASH_INSTRUCTION_CACHE         	 1
+#define FLASH_PREFETCH_MODE             	 1
 
 /**
  * System tick configuration.
@@ -54,6 +56,8 @@
 #define HSI_TRIM_VALUE                  16U
 #define OVER_CLOCK                      1 // Note: if over clock, your device maybe not work correctly
 
+#define LSI_VALUE                       32000U
+#define LSE_VALUE                       32768U
 // Constant value. Don't change this.
 #define SYSTEM_CLOCK_FREQUENCY_MAX      168000000U // Hz
 #define AHB_CLOCK_FREQUENCY_MAX         168000000U // Hz (AHB is HCLK)
@@ -82,7 +86,7 @@
  */
 #define LOG_MONITOR						1
 #if LOG_MONITOR
-#define LOG_UART_BAUDRATE                115200U
+#define LOG_UART_BAUDRATE               115200U
 #define LOG_UART_NUM 					USART1
 
 #define LOG_UART_TX 					6
@@ -93,6 +97,15 @@
 #define LOG_TIME 						1
 #endif
 
+
+
+/**
+ * PERIPHERAL CONFIG.
+ */
+#define CHIP_RESET_IF_CONFIG_FAIL 1
+#if CHIP_RESET_IF_CONFIG_FAIL
+#define WAIT_FOR_RESET_TIME 5
+#endif /* CHIP_RESET_IF_CONFIG_FAIL */
 
 
 

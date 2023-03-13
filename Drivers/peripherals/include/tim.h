@@ -8,8 +8,8 @@
 #ifndef TIM_H_
 #define TIM_H_
 
-#include "periph_en.h"
-#ifdef ENABLE_TIM
+#include "peripheral_enable.h"
+#if ENABLE_TIM
 
 
 #ifdef __cplusplus
@@ -19,7 +19,7 @@ extern "C"{
 #include "stm32f4xx.h"
 #include "status.h"
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 #include "dma.h"
 #endif
 
@@ -81,7 +81,7 @@ typedef struct{
 	tim_arpe_t		autoreloadpreload = TIM_ARP_DISABLE;
 	tim_interrupt_t interrupt = TIM_INTERRUPT_DISABLE;
 	uint32_t        interruptpriority = 0U;
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 	dma_t 			dma_upd = NULL;
 	dma_t           dma_ch1 = NULL;
 	dma_t 			dma_ch2 = NULL;
@@ -201,7 +201,7 @@ class TIM{
 		return_t start_it(void);
 		return_t stop_it(void);
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 		return_t start_dma(uint32_t *cnt_buffer, uint16_t size = 1);
 		return_t stop_dma(void);
 #endif
@@ -214,7 +214,7 @@ class TIM{
 
 		return_t pwm_output_start_it(tim_channel_t channel, uint32_t pwm);
 		return_t pwm_output_stop_it(tim_channel_t channel);
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 		return_t pwm_output_start_dma(tim_channel_t channel, uint32_t *pwm_buffer, uint16_t size = 1);
 		return_t pwm_output_stop_dma(tim_channel_t channel);
 #endif
@@ -229,7 +229,7 @@ class TIM{
 
 		return_t pwm_input_start_it(tim_channel_t channel);
 		return_t pwm_input_stop_it(tim_channel_t channel);
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 		return_t pwm_input_start_dma(tim_channel_t channel, uint32_t *pwm_buffer, uint16_t size = 1);
 		return_t pwm_input_stop_dma(tim_channel_t channel);
 #endif
@@ -243,7 +243,7 @@ class TIM{
 		return_t encoder_start_it(void);
 		return_t encoder_stop_it(void);
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 		return_t encoder_start_dma(uint32_t *encA_buffer = NULL, uint32_t *encB_buffer = NULL, uint16_t size = 1);
 		return_t encoder_stop_dma(void);
 #endif
@@ -259,7 +259,7 @@ class TIM{
 		return_t inputcapture_start_it(tim_channel_t channel);
 		return_t inputcapture_stop_it(tim_channel_t channel);
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 		return_t inputcapture_start_dma(tim_channel_t channel, uint32_t *capture_buffer, uint16_t size);
 		return_t inputcapture_stop_dma(tim_channel_t channel);
 #endif
@@ -273,7 +273,7 @@ class TIM{
 
 		return_t outputcompare_start_it(tim_channel_t channel, uint32_t value);
 		return_t outputcompare_stop_it(tim_channel_t channel);
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 		return_t outputcompare_start_dma(tim_channel_t channel, uint32_t *oc_buffer, uint16_t size = 1);
 		return_t outputcompare_stop_dma(tim_channel_t channel);
 #endif
@@ -295,7 +295,7 @@ class TIM{
 
 typedef TIM* tim_t;
 
-void TIM_IRQHandler(tim_t timptr);
+void TIM_IRQHandler(TIM *timptr);
 
 #ifdef ENABLE_TIM1
 extern tim_t tim1;

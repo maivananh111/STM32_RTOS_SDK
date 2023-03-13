@@ -9,8 +9,8 @@
 #define USART_F4XX_H_
 
 
-#include "periph_en.h"
-#ifdef ENABLE_USART
+#include "peripheral_enable.h"
+#if ENABLE_USART
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,7 +19,7 @@ extern "C" {
 #include "sdkconfig.h"
 #include "stdio.h"
 #include "stm32f4xx.h"
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 #include "dma.h"
 #endif
 #include "status.h"
@@ -63,8 +63,10 @@ typedef struct{
 	uint16_t 			     txpin;
 	GPIO_TypeDef 		     *rxport;
 	uint16_t 			     rxpin;
+#if ENABLE_DMA
 	dma_t 				     txdma = NULL;
 	dma_t 				     rxdma = NULL;
+#endif /* ENABLE_DMA */
 } usart_config_t;
 
 #define USART_TIMEOUT 100U
@@ -90,20 +92,25 @@ class USART {
 		return_t transmit_stop_it(void);
 		return_t receive_stop_it(void);
 
+#if ENABLE_DMA
 		return_t transmit_start_dma(uint8_t *data, uint16_t len);
 		return_t receive_start_dma(uint16_t len);
 		return_t transmit_stop_dma(void);
 		return_t receive_stop_dma(void);
+#endif /* ENABLE_DMA */
 
 		return_t receive_to_idle_start_it(uint16_t buffer_size);
 		return_t receive_to_idle_stop_it(void);
+#if ENABLE_DMA
 		return_t receive_to_idle_start_it_dma(uint16_t buffer_size);
 		return_t receive_to_idle_stop_it_dma(void);
-
+#endif /* ENABLE_DMA */
 		return_t receice_to_endchar_start_it(uint16_t buffer_size, char endchar = '\0');
 		return_t receice_to_endchar_stop_it(void);
+#if ENABLE_DMA
 		return_t receice_to_endchar_start_dma(uint16_t buffer_size, char endchar = '\0');
 		return_t receice_to_endchar_stop_dma(void);
+#endif /* ENABLE_DMA */
 
 		return_t get_buffer(uint8_t **data);
 		uint16_t get_bufferlen(void);
@@ -111,7 +118,9 @@ class USART {
 		usart_config_t *get_config(void);
 
 		USART_TypeDef *_usart;
+#if ENABLE_DMA
 		dma_t _txdma = NULL, _rxdma = NULL;
+#endif /* ENABLE_DMA */
 		void *parameter = NULL;
 		void (*handler_callback)(usart_event_t event, void *param) = NULL;
 		uint8_t *rxbuffer = NULL;
@@ -125,35 +134,33 @@ class USART {
 
 };
 
+typedef USART* usart_t;
+
 void USART_IRQ_Handler(USART *usart);
 
 #if defined(ENABLE_USART1) && defined(USART1)
-extern USART usart1;
+extern usart_t usart1;
 void USART1_IRQHandler(void);
 #endif
 #if defined(ENABLE_USART2) && defined(USART2)
-extern USART usart2;
+extern usart_t usart2;
 void USART2_IRQHandler(void);
 #endif
 #if defined(ENABLE_USART3) && defined(USART3)
-extern USART usart3;
+extern usart_t usart3;
 void USART3_IRQHandler(void);
 #endif
 #if defined(ENABLE_UART4) && defined(UART4)
-extern USART uart4;
+extern usart_t uart4;
 void UART4_IRQHandler(void);
 #endif
 #if defined(ENABLE_UART5) && defined(UART5)
-extern USART uart5;
+extern usart_t uart5;
 void UART5_IRQHandler(void);
 #endif
 #if defined(ENABLE_USART6) && defined(USART6)
-extern USART usart6;
+extern usart_t usart6;
 void USART6_IRQHandler(void);
-#endif
-#if defined(ENABLE_USART7) && defined(USART7)
-extern USART usart7;
-void USART7_IRQHandler(void);
 #endif
 
 

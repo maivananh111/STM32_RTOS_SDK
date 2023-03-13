@@ -6,12 +6,13 @@
  */
 
 
-#include "periph_en.h"
+#include "peripheral_enable.h"
 #ifdef ENABLE_TIM
 
 #include "rcc.h"
 #include "gpio.h"
 #include "tim.h"
+#include "systick.h"
 #include "stm_log.h"
 
 #define UIF_TIMEOUT 100U
@@ -177,6 +178,11 @@ return_t TIM::start_it(void){
 	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+#if CHIP_RESET_IF_CONFIG_FAIL
+		STM_LOGI(TAG, "Chip will reset after %ds.", WAIT_FOR_RESET_TIME);
+		systick_delay_ms(WAIT_FOR_RESET_TIME*1000U);
+			__NVIC_SystemReset();
+#endif /* CHIP_RESET_IF_CONFIG_FAIL */
 		return ret;
 	}
 
@@ -223,7 +229,7 @@ return_t TIM::stop_it(void){
 	return ret;
 }
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 return_t TIM::start_dma(uint32_t *count_buf, uint16_t size){
 	return_t ret;
 
@@ -358,6 +364,11 @@ return_t TIM::pwm_output_start_it(tim_channel_t channel, uint32_t pwm){
 	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+#if CHIP_RESET_IF_CONFIG_FAIL
+		STM_LOGI(TAG, "Chip will reset after %ds.", WAIT_FOR_RESET_TIME);
+		systick_delay_ms(WAIT_FOR_RESET_TIME*1000U);
+			__NVIC_SystemReset();
+#endif /* CHIP_RESET_IF_CONFIG_FAIL */
 		return ret;
 	}
 
@@ -407,7 +418,7 @@ return_t TIM::pwm_output_stop_it(tim_channel_t channel){
 	return ret;
 }
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 return_t TIM::pwm_output_start_dma(tim_channel_t channel, uint32_t *pwm_buffer, uint16_t size){
 	return_t ret;
 	dma_t dma = NULL;
@@ -609,7 +620,7 @@ return_t TIM::pwm_input_start_it(tim_channel_t channel){
 return_t TIM::pwm_input_stop_it(tim_channel_t channel){
 	return inputcapture_stop_it(channel);
 }
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 return_t TIM::pwm_input_start_dma(tim_channel_t channel, uint32_t *pwm_buffer, uint16_t size){
 	return inputcapture_start_dma(channel, pwm_buffer, size);
 }
@@ -725,6 +736,11 @@ return_t TIM::encoder_start_it(void){
 	if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 		set_return(&ret, ERR, __LINE__);
 		STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+#if CHIP_RESET_IF_CONFIG_FAIL
+		STM_LOGI(TAG, "Chip will reset after %ds.", WAIT_FOR_RESET_TIME);
+		systick_delay_ms(WAIT_FOR_RESET_TIME*1000U);
+			__NVIC_SystemReset();
+#endif /* CHIP_RESET_IF_CONFIG_FAIL */
 		return ret;
 	}
 
@@ -781,7 +797,7 @@ return_t TIM::encoder_stop_it(void){
 	return ret;
 }
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 return_t TIM::encoder_start_dma(uint32_t *encA_buffer, uint32_t *encB_buffer, uint16_t size){
 	return_t ret;
 
@@ -1046,7 +1062,7 @@ return_t TIM::inputcapture_stop_it(tim_channel_t channel){
 	return ret;
 }
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 return_t TIM::inputcapture_start_dma(tim_channel_t channel, uint32_t *capture_buffer, uint16_t size){
 	return_t ret;
 	dma_t dma = NULL;
@@ -1229,7 +1245,7 @@ return_t TIM::outputcompare_stop_it(tim_channel_t channel){
 	return pwm_output_stop_it(channel);
 }
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 return_t TIM::outputcompare_start_dma(tim_channel_t channel, uint32_t *oc_buffer, uint16_t size){
 	return pwm_output_start_dma(channel, oc_buffer, size);
 }
@@ -1248,7 +1264,7 @@ return_t TIM::set_pulse(tim_channel_t channel, uint32_t pulse){
 }
 
 
-void TIM_IRQHandler(tim_t timptr){
+void TIM_IRQHandler(TIM *timptr){
 	tim_event_t event = TIM_NO_EVENT;
 	tim_channel_t channel = TIM_NOCHANNEL;
 
@@ -1316,21 +1332,21 @@ TIM tim_1(TIM1);
 tim_t tim1 = &tim_1;
 #ifndef ENABLE_TIM9
 void TIM1_BRK_TIM9_IRQHandler(void){
-	TIM_IRQHandler(tim1);
+	TIM_IRQHandler(&tim_1);
 }
 #endif
 #ifndef ENABLE_TIM10
 void TIM1_UP_TIM10_IRQHandler(void){
-	TIM_IRQHandler(tim1);
+	TIM_IRQHandler(&tim_1);
 }
 #endif
 #ifndef ENABLE_TIM11
 void TIM1_TRG_COM_TIM11_IRQHandler(void){
-	TIM_IRQHandler(tim1);
+	TIM_IRQHandler(&tim_1);
 }
 #endif
 void TIM1_CC_IRQHandler(void){
-	TIM_IRQHandler(tim1);
+	TIM_IRQHandler(&tim_1);
 }
 #endif
 
@@ -1338,7 +1354,7 @@ void TIM1_CC_IRQHandler(void){
 TIM tim_2(TIM2);
 tim_t tim2 = &tim_2;
 void TIM2_IRQHandler(void){
-	TIM_IRQHandler(tim2);
+	TIM_IRQHandler(&tim_2);
 }
 #endif
 
@@ -1346,7 +1362,7 @@ void TIM2_IRQHandler(void){
 TIM tim_3(TIM3);
 tim_t tim3 = &tim_3;
 void TIM3_IRQHandler(void){
-	TIM_IRQHandler(tim3);
+	TIM_IRQHandler(&tim_3);
 }
 #endif
 
@@ -1354,7 +1370,7 @@ void TIM3_IRQHandler(void){
 TIM tim_4(TIM4);
 tim_t tim4 = &tim_4;
 void TIM4_IRQHandler(void){
-	TIM_IRQHandler(tim4);
+	TIM_IRQHandler(&tim_4);
 }
 #endif
 
@@ -1362,7 +1378,7 @@ void TIM4_IRQHandler(void){
 TIM tim_5(TIM5);
 tim_t tim5 = &tim_5;
 void TIM5_IRQHandler(void){
-	TIM_IRQHandler(tim5);
+	TIM_IRQHandler(&tim_5);
 }
 #endif
 
@@ -1370,7 +1386,7 @@ void TIM5_IRQHandler(void){
 TIM tim_6(TIM6);
 tim_t tim6 = &tim_6;
 void TIM6_DAC_IRQHandler(void){
-	TIM_IRQHandler(tim6);
+	TIM_IRQHandler(&tim_6);
 }
 #endif
 
@@ -1378,7 +1394,7 @@ void TIM6_DAC_IRQHandler(void){
 TIM tim_7(TIM7);
 tim_t tim7 = &tim_7;
 void TIM7_IRQHandler(void){
-	TIM_IRQHandler(tim7);
+	TIM_IRQHandler(&tim_7);
 }
 #endif
 
@@ -1387,21 +1403,21 @@ TIM tim_8(TIM8);
 tim_t tim8 = &tim_8;
 #ifndef ENABLE_TIM12
 void TIM8_BRK_TIM12_IRQHandler(void){
-	TIM_IRQHandler(tim8);
+	TIM_IRQHandler(&tim_8);
 }
 #endif
 #ifndef ENABLE_TIM13
 void TIM8_UP_TIM13_IRQHandler(void){
-	TIM_IRQHandler(tim8);
+	TIM_IRQHandler(&tim_8);
 }
 #endif
 #ifndef ENABLE_TIM14
 void TIM8_TRG_COM_TIM14_IRQHandler(void){
-	TIM_IRQHandler(tim8);
+	TIM_IRQHandler(&tim_8);
 }
 #endif
 void TIM8_CC_IRQHandler(void){
-	TIM_IRQHandler(tim8);
+	TIM_IRQHandler(&tim_8);
 }
 #endif
 
@@ -1410,9 +1426,9 @@ TIM tim_9(TIM9);
 tim_t tim9 = &tim_9;
 void TIM1_BRK_TIM9_IRQHandler(void){
 #ifdef ENABLE_TIM1
-	TIM_IRQHandler(tim1);
+	TIM_IRQHandler(&tim_1);
 #endif
-	TIM_IRQHandler(tim9);
+	TIM_IRQHandler(&tim_9);
 }
 #endif
 
@@ -1421,9 +1437,9 @@ TIM tim_10(TIM10);
 tim_t tim10 = &tim_10;
 void TIM1_UP_TIM10_IRQHandler(void){
 #ifdef ENABLE_TIM1
-	TIM_IRQHandler(tim1);
+	TIM_IRQHandler(&tim_1);
 #endif
-	TIM_IRQHandler(tim10);
+	TIM_IRQHandler(&tim_10);
 }
 #endif
 
@@ -1432,9 +1448,9 @@ TIM tim_11(TIM11);
 tim_t tim11 = &tim_11;
 void TIM1_TRG_COM_TIM11_IRQHandler(void){
 #ifdef ENABLE_TIM1
-	TIM_IRQHandler(tim1);
+	TIM_IRQHandler(&tim_1);
 #endif
-	TIM_IRQHandler(tim11);
+	TIM_IRQHandler(&tim_11);
 }
 #endif
 
@@ -1443,9 +1459,9 @@ TIM tim_12(TIM12);
 tim_t tim12 = &tim_12;
 void TIM8_BRK_TIM12_IRQHandler(void){
 #ifdef ENABLE_TIM8
-	TIM_IRQHandler(tim8);
+	TIM_IRQHandler(&tim_8);
 #endif
-	TIM_IRQHandler(tim12);
+	TIM_IRQHandler(&tim_12);
 }
 #endif
 
@@ -1454,9 +1470,9 @@ TIM tim_13(TIM13);
 tim_t tim13 = &tim_13;
 void TIM8_UP_TIM13_IRQHandler(void){
 #ifdef ENABLE_TIM8
-	TIM_IRQHandler(tim8);
+	TIM_IRQHandler(&tim_8);
 #endif
-	TIM_IRQHandler(tim13);
+	TIM_IRQHandler(&tim_13);
 }
 #endif
 
@@ -1465,9 +1481,9 @@ TIM tim_14(TIM14);
 tim_t tim14 = &tim_14;
 void TIM8_TRG_COM_TIM14_IRQHandler(void){
 #ifdef ENABLE_TIM8
-	TIM_IRQHandler(tim8);
+	TIM_IRQHandler(&tim_8);
 #endif
-	TIM_IRQHandler(tim14);
+	TIM_IRQHandler(&tim_14);
 }
 #endif
 

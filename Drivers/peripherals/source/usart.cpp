@@ -4,8 +4,8 @@
  *  Created on: 20 thg 11, 2022
  *      Author: anh
  */
-#include "periph_en.h"
-#ifdef ENABLE_USART
+#include "peripheral_enable.h"
+#if ENABLE_USART
 #include "usart.h"
 
 #include "math.h"
@@ -18,7 +18,6 @@
 #include "stm_log.h"
 
 
-
 static const char *TAG = "USART";
 
 USART::USART(USART_TypeDef *usart){
@@ -28,8 +27,10 @@ USART::USART(USART_TypeDef *usart){
 return_t USART::init(usart_config_t *conf){
 	return_t ret;
 	_conf = conf;
+#if ENABLE_DMA
 	_rxdma = _conf -> rxdma;
 	_txdma = _conf -> txdma;
+#endif /* ENABLE_DMA */
 	__IO uint32_t usart_bus_frequency = 0UL;
 
 	gpio_port_clock_enable(_conf -> txport);
@@ -110,6 +111,11 @@ return_t USART::init(usart_config_t *conf){
 		if(_conf -> interruptpriority < RTOS_MAX_SYSTEM_INTERRUPT_PRIORITY){
 			set_return(&ret, ERR, __LINE__);
 			STM_LOGE(TAG, "%s -> %s -> Invalid priority, please increase the priority value.", __FILE__, __FUNCTION__);
+#if CHIP_RESET_IF_CONFIG_FAIL
+			STM_LOGI(TAG, "Chip will reset after %ds.", WAIT_FOR_RESET_TIME);
+			systick_delay_ms(WAIT_FOR_RESET_TIME*1000U);
+			__NVIC_SystemReset();
+#endif /* CHIP_RESET_IF_CONFIG_FAIL */
 			return ret;
 		}
 
@@ -151,8 +157,6 @@ return_t USART::register_event_handler(void (*function_ptr)(usart_event_t event,
 	}
 
 	return ret;
-
-
 }
 
 
@@ -173,7 +177,6 @@ return_t USART::transmit(uint8_t data){
 
 	return ret;
 }
-
 
 
 return_t USART::transmit(uint8_t *data, uint16_t len){
@@ -395,6 +398,7 @@ return_t USART::receive_stop_it(void){
 	return ret;
 }
 
+#if ENABLE_DMA
 return_t USART::transmit_start_dma(uint8_t *data, uint16_t len){
 	return_t ret;
 
@@ -511,7 +515,7 @@ return_t USART::receive_stop_dma(void){
 
 	return ret;
 }
-
+#endif /* ENABLE_DMA */
 
 
 
@@ -532,6 +536,7 @@ return_t USART::receive_to_idle_stop_it(void){
 	return ret;
 }
 
+#if ENABLE_DMA
 return_t USART::receive_to_idle_start_it_dma(uint16_t buffer_size){
 	return_t ret = receive_start_dma(buffer_size);
 
@@ -549,7 +554,7 @@ return_t USART::receive_to_idle_stop_it_dma(void){
 
 	return ret;
 }
-
+#endif /* ENABLE_DMA */
 
 return_t USART::receice_to_endchar_start_it(uint16_t buffer_size, char endchar){
 	return_t ret =receive_start_it(buffer_size);
@@ -565,6 +570,7 @@ return_t USART::receice_to_endchar_stop_it(void){
 	return receive_stop_it();
 }
 
+#if ENABLE_DMA
 return_t USART::receice_to_endchar_start_dma(uint16_t buffer_size, char endchar){
 	return_t ret =receive_start_dma(buffer_size);
 
@@ -578,14 +584,15 @@ return_t USART::receice_to_endchar_stop_dma(void){
 	this->endchar = '\0';
 	return receive_stop_dma();
 }
+#endif /* ENABLE_DMA */
 
 return_t USART::get_buffer(uint8_t **data){
 	return_t ret;
 
 	if(rxbuffer != NULL){
-		rxbuffer[rxlen] = '\0';
-		*data = (uint8_t*)malloc(rxlen+1);
-		memcpy(*data, rxbuffer, rxlen+1);
+		rxbuffer[rxcount] = '\0';
+		*data = (uint8_t*)malloc(rxcount);
+		memcpy(*data, rxbuffer, rxcount);
 
 		free(rxbuffer);
 
@@ -655,6 +662,7 @@ void USART_IRQ_Handler(USART *usart){
 
 		if(usart -> reception == USART_RECEPTION_TOIDLE){
 			usart -> _usart -> SR &=~ (USART_SR_IDLE | USART_SR_RXNE);
+#if ENABLE_DMA
 			if(usart -> _usart -> CR3 & USART_CR3_DMAR){
 				usart -> rxcount = usart -> _rxdma -> get_counter();
 				if(usart -> _rxdma -> get_config() -> mode != DMA_CIRCULAR){
@@ -664,9 +672,12 @@ void USART_IRQ_Handler(USART *usart){
 				goto EventCB;
 			}
 			else{
+#endif /* ENABLE_DMA */
 				event = USART_EVENT_IDLE_STATE;
 				goto EventCB;
+#if ENABLE_DMA
 			}
+#endif /* ENABLE_DMA */
 		}
 	}
 
@@ -676,39 +687,45 @@ void USART_IRQ_Handler(USART *usart){
 }
 
 #if defined(ENABLE_USART1) && defined(USART1)
-USART usart1(USART1);
+USART usart_1(USART1);
+usart_t usart1 = &usart_1;
 void USART1_IRQHandler(void){
-	USART_IRQ_Handler(&usart1);
+	USART_IRQ_Handler(&usart_1);
 }
 #endif /* defined(ENABLE_USART1) && defined(USART1) */
 #if defined(ENABLE_USART2) && defined(USART2)
-USART usart2(USART2);
+USART usart_2(USART2);
+usart_t usart2 = &usart_2;
 void USART2_IRQHandler(void){
-	USART_IRQ_Handler(&usart2);
+	USART_IRQ_Handler(&usart_2);
 }
 #endif /* defined(ENABLE_USART2) && defined(USART2) */
 #if defined(ENABLE_USART3) && defined(USART3)
-USART usart3(USART3);
+USART usart_3(USART3);
+usart_t usart3 = &usart_3;
 void USART3_IRQHandler(void){
-	USART_IRQ_Handler(&usart3);
+	USART_IRQ_Handler(&usart_3);
 }
 #endif /* defined(ENABLE_USART3) && defined(USART3) */
 #if defined(ENABLE_UART4) && defined(UART4)
-USART uart4 (UART4);
+USART uart_4 (UART4);
+usart_t uart4 = &uart_4;
 void UART4_IRQHandler(void){
-	USART_IRQ_Handler(&uart4);
+	USART_IRQ_Handler(&uart_4);
 }
 #endif /* defined(ENABLE_USART1) && defined(USART1) */
 #if defined(ENABLE_UART5) && defined(UART5)
-USART uart5 (UART5);
+USART uart_5 (UART5);
+usart_t uart5 = &uart_5;
 void UART5_IRQHandler(void){
-	USART_IRQ_Handler(&uart5);
+	USART_IRQ_Handler(&uart_5);
 }
 #endif /* defined(ENABLE_UART5) && defined(UART5) */
 #if defined(ENABLE_USART6) && defined(USART6)
-USART usart6(USART6);
+USART usart_6(USART6);
+usart_t usart6 = &usart_6;
 void USART6_IRQHandler(void){
-	USART_IRQ_Handler(&usart6);
+	USART_IRQ_Handler(&usart_6);
 }
 #endif /* defined(ENABLE_USART6) && defined(USART6) */
 

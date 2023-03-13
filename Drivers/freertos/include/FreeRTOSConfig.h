@@ -43,9 +43,6 @@
  * See http://www.freertos.org/a00110.html
  *----------------------------------------------------------*/
 
-/* USER CODE BEGIN Includes */
-/* Section where include file can be added */
-/* USER CODE END Includes */
 
 /* Ensure definitions are only used by the compiler, and not by the assembler. */
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
@@ -60,11 +57,11 @@
 #define configUSE_PREEMPTION                     1
 #define configSUPPORT_STATIC_ALLOCATION          1
 #define configSUPPORT_DYNAMIC_ALLOCATION         1
-#define configUSE_IDLE_HOOK                      0
+#define configUSE_IDLE_HOOK                      1
 #define configUSE_TICK_HOOK                      0
 #define configCPU_CLOCK_HZ                       ( SystemCoreClock )
-#define configTICK_RATE_HZ                       ((TickType_t)SYSTICK_RATE)
-#define configMAX_PRIORITIES                     (MAX_PRIORITY)
+#define configTICK_RATE_HZ                       ((TickType_t)RTOS_TICK_RATE)
+#define configMAX_PRIORITIES                     (RTOS_TASK_MAX_PRIORITY)
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
 #define configTOTAL_HEAP_SIZE                    ((size_t)(RTOS_HEAP_SIZE))
 #define configMAX_TASK_NAME_LEN                  (64)

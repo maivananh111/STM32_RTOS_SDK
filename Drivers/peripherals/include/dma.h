@@ -9,9 +9,9 @@
 #define DMA_H_
 
 
-#include "periph_en.h"
+#include "peripheral_enable.h"
 
-#ifdef ENABLE_DMA
+#if ENABLE_DMA
 
 #include "stm32f4xx.h"
 #include "status.h"
@@ -135,7 +135,7 @@ typedef DMA* dma_t;
 
 
 
-void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, dma_t dmaptr);
+void DMA_IRQ_Handler(DMA_TypeDef *dma, DMA_Stream_TypeDef *stream, DMA *dmaptr);
 
 /**
  *  DMA1 Stream class.
